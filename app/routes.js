@@ -1,11 +1,11 @@
 var passport = require('passport'),
 	http = require('http'),
-	async = require('async'),
 	Busboy = require('busboy'),
 	path = require('path'),
 	url = require('url'),
 	dns = require('dns'),
-	fs = require('fs');
+	fs = require('fs'),
+	chalk = require('chalk');
 
 var Server = require('./models/server'),
 	User = require('./models/user');
@@ -20,11 +20,23 @@ var handleError = function(err, req, res) {
 	if(!err)
 		return
 	
-	console.log('!', req.ip, req.method, req.url);
-	console.log('!', err.toString());
+	if(req) {
+		if(lastIP !== req.ip) {
+			lastIP = req.ip;
+
+			console.log('\n' + chalk.bold(lastIP + ':'));
+		}
+		
+		console.log(' ', chalk.bgRed(chalk.underline(chalk.bold('Error'), '@', timestamp(), ':')));
+		console.log(' ', ' ', req.method, req.url);
+	}
 	
 	if(err.stack)
-		console.log('!', err.stack);
+		console.log(' ', ' ', chalk.red(err.stack));
+	else
+		console.log(' ', ' ', chalk.red(err.toString()));
+	
+	console.log('');
 	
 	//if(res)
 		//res.redirect('/return?msg=error');
@@ -44,40 +56,44 @@ var addActivity = function(user, info, shouldSave) {
 	}	
 }
 
-var sortServers = function() {
-	Server.find({}, function(err, servers) {
-		if(handleError(err))
-			return
-		
-		if(!servers)
-			return
-		
-		servers.sort(function(a, b) {
-			return (b.votes.up - b.votes.down) - (a.votes.up - a.votes.down);
-		});
-
-		servers.forEach(function(server, rank) {
-			server.rank = parseInt(rank) + 1;
-
-			server.save();
-		});
-	});
+var addNotification = function(user, info, shouldSave) {
+	info.unread = true;
+	
+	user.notifications.unshift(info);
+	
+	user.notifications = user.notifications.slice(0, 5);
+	
+	if(shouldSave) {
+		user.save();
+	}	
 }
+
+var timestamp = function() {
+	var now = new Date();
+	
+	return chalk.blue(now.getMonth() + '/' + now.getDate() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds());
+}	
 
 var lastIP;
 
 module.exports = function(app) {
 	var startTime = Date.now();
 	
+	process.on('uncaughtException', function(err) {
+		console.log(chalk.red.underline.bold('!!Uncaught exception!!'), '\n');
+		handleError(err);
+	});
+	
 	app.use(function(req, res, next) {
 		if(req.method != 'GET') {
 			if(lastIP !== req.ip) {
 				lastIP = req.ip;
 
-				console.log('\n*', lastIP + ':');
+				console.log('\n' + chalk.bold(lastIP + ':'));
 			}
-
-			console.log(' ', req.method, req.url);
+			
+			console.log(' ', '@', timestamp(), ':');
+			console.log(' ', ' ', req.method, req.url);
 			
 			['params', 'body'].forEach(function(field) {
 				var empty = true;
@@ -93,6 +109,8 @@ module.exports = function(app) {
 					console.log(' ', ' ', field + ':', req[field]);
 				}
 			});
+			
+			console.log('');
 		}
 		
 		req.socket.setMaxListeners(0);
@@ -119,6 +137,8 @@ module.exports = function(app) {
 				}
 			});
 		}
+		
+		res.cookie('XSRF-TOKEN', req.csrfToken());
 
 		next();
 	});
@@ -177,9 +197,41 @@ module.exports = function(app) {
 		res.redirect('/return?msg=logged_out');
 	});
 	
-	app.get('/api/status', function(req, res) {
-		res.json({
-			startTime: startTime
+	app.get('/api/info', function(req, res) {
+		var now = new Date(),
+			ret = {startTime: startTime},
+			amt = 0,
+			len = 3;
+		
+		now.setMinutes(now.getMinutes() - 5);
+		
+		var addAndCheck = function(key, val) {
+			ret[key] = val;
+			
+			if(++amt == len) {
+				res.json(ret);
+			}
+		}
+		
+		User.find({}, function(err, users) {
+			if(handleError(err, req, res))
+				return
+				
+			addAndCheck('users', (users ? users.length : 0));
+		});
+		
+		User.find({lastSeen: {$gt: now}}, function(err, active) {
+			if(handleError(err, req, res))
+				return
+				
+			addAndCheck('active', (active ? active.length : 0));
+		});
+		
+		Server.find({}, function(err, servers) {
+			if(handleError(err, req, res))
+				return
+				
+			addAndCheck('servers', (servers ? servers.length : 0));
 		});
 	});
 
@@ -187,8 +239,43 @@ module.exports = function(app) {
 		res.json(req.user);
 	});
 	
+	app.post('/api/clearNotifications', function(req, res) {
+		if(!req.user) {
+			res.end();
+			return
+		}
+		
+		User.findOne({id: req.user.id}, function(err, userdata) {
+			if(handleError(err, req, res))
+				return
+				
+			if(!userdata) {
+				res.end()
+				return
+			}
+				
+			userdata.notifications.forEach(function(note, k) {
+				note.unread = false;
+			});
+				
+			userdata.markModified('notifications');
+			
+			userdata.save(function(err, saved) {
+				if(handleError(err, req, res))
+					return
+				
+				res.end();
+			});
+		});
+	});			
+	
 	app.post('/api/users/:id/comment', function(req, res) {
 		if(!req.user) {
+			res.end();
+			return
+		}
+		
+		if(!req.body.comment.trim().length) {
 			res.end();
 			return
 		}
@@ -206,6 +293,12 @@ module.exports = function(app) {
 				author: req.user.id,
 				time: Date.now(),
 				comment: req.body.comment
+			});
+			
+			addNotification(userdata, {
+				type: 'comment',
+				label: 'profile',
+				id: req.params.id
 			});
 			
 			userdata.save(function(err, saved) {
@@ -270,13 +363,18 @@ module.exports = function(app) {
 	//servers
 
 	app.get('/api/servers/', function(req, res) {
-		req.query.amt = +(req.query.amt || 10);
-		req.query.start = Math.max(+(req.query.start || 0), 0);
+		var special = {
+			amt: +(req.query.amt || 10),
+			start: Math.max(+(req.query.start || 0), 0),
+			sortBy: req.query.sortBy || 'added',
+			reverse: !!req.query.reverse
+		}
+		
 		var search = {};
 
 		for(var key in req.query) {
-			if(key !== 'amt' && key !== 'start') {
-				search[key] = new RegExp('.*' + req.query[key] + '.*', 'i');
+			if(req.query.hasOwnProperty(key) && !special.hasOwnProperty(key)) {
+				search[key] = new RegExp('.*' + req.query[key].replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&") + '.*', 'i');
 			}
 		}
 
@@ -285,70 +383,20 @@ module.exports = function(app) {
 				return
 				
 			servers.sort(function(a, b) {
-				return a.rank - b.rank;
+				var field = special.sortBy;
+				var x = (a[field] || 0);
+				var y = (b[field] || 0);
+				var ret = x < y ? 1 : x > y ? -1 : 0;
+				
+				ret *= special.reverse ? -1 : 1;
+				
+				return ret;
 			});
 			
 			res.json({
 				amt: servers.length,
-				results: servers.slice(req.query.start, req.query.start + req.query.amt).map(function(v) {return v._id})
+				results: servers.slice(special.start, special.start + special.amt).map(function(v) {return v._id})
 			});
-			
-			/*
-
-			res.writeHead(200, {
-				'Content-Type': 'application/json; charset=utf-8',
-				'Transfer-Encoding': 'chunked'
-			});
-
-			res.write('[');
-
-			var count = 0;
-			var addToRes = function(server) {
-				res.write((count++ > 0 ? ', ' : '') + JSON.stringify(server));
-			}
-
-			if(servers.length > 0) {
-				async.each(servers.slice(0, req.query.amt), function(server, cb) {
-					if(server.needsUpdate()) {
-						server.getInfo(function(err, info) {
-							delete server.error;
-
-							if(err) {
-								server.error = err;
-								server.updated = Date.now();
-							} else {
-								for(var key in info) {
-									if(info.hasOwnProperty(key)) {
-										server[key] = info[key];
-									}
-								}
-							}
-
-							server.save(function(err) {
-								if(err)
-									throw err;
-
-								addToRes(server);
-
-								cb();
-							});
-						});
-					} else {
-						addToRes(server);
-
-						cb();
-					}
-				}, function(err) {
-					if(err)
-						throw err;
-
-					res.end(']');
-				});
-			} else {
-				res.end(']');
-			}
-			
-			*/
 		});
 	});
 
@@ -369,6 +417,7 @@ module.exports = function(app) {
 					if(err) {
 						server.error = err;
 						server.updated = Date.now();
+						server.numPlayers = 0;
 					} else {
 						for(var key in info) {
 							if(info.hasOwnProperty(key)) {
@@ -412,10 +461,8 @@ module.exports = function(app) {
 					return
 				
 				var favorites = JSON.parse(userdata.favorites);
-				var votes = JSON.parse(userdata.votes);
-				var vote = votes[id];
 				
-				switch(req.body.act) {
+				switch(req.body.act) { //just in case I guess?
 					case('fave'):
 						if(favorites[id]) {
 							delete favorites[id];
@@ -426,35 +473,6 @@ module.exports = function(app) {
 						}
 						
 						break
-						
-					case('upVote'):
-						if(vote && vote > 0) {
-							delete votes[id];
-							server.votes.up--;
-						} else {
-							/* if(vote && vote < 0) {
-								server.votes.down--;
-							} */
-							
-							votes[id] = 1;
-							server.votes.up++;
-						}
-						
-						break
-					
-					/* case('dnVote'):
-						if(vote && vote < 0) {
-							delete votes[id];
-							server.votes.down--;
-						} else {
-							if(vote && vote > 0) {
-								server.votes.up--;
-							}
-							votes[id] = -1;
-							server.votes.down++;
-						}
-						
-						break */
 				}
 				
 				var info;
@@ -467,34 +485,17 @@ module.exports = function(app) {
 							id: id
 						}
 					}
-				} else {
-					if(votes[id]) {
-						info = {
-							type: 'vote',
-							action: 'add', //(votes[id] > 0 ? 'add' : 'delete'),
-							id: id
-						}
-					}
 				}
 				
 				userdata.favorites = JSON.stringify(favorites);
-				userdata.votes = JSON.stringify(votes);
 				
 				if(info) {
 					addActivity(userdata, info);
 				}
 				
-				userdata.save(function(err) {
-					if(handleError(err, req, res))
-						return
-				});
+				userdata.save();
 				
-				server.save(function(err, saved) {
-					if(handleError(err, req, res))
-						return
-					
-					sortServers();
-				});
+				server.save();
 				
 				res.end();
 			});
@@ -503,6 +504,11 @@ module.exports = function(app) {
 	
 	app.post('/api/servers/:id/comment', function(req, res) {
 		if(!req.user) {
+			res.end();
+			return
+		}
+		
+		if(!req.body.comment.trim().length) {
 			res.end();
 			return
 		}
@@ -519,10 +525,26 @@ module.exports = function(app) {
 			server.comments.unshift({
 				author: req.user.id,
 				time: Date.now(),
-				comment: req.body.comment
+				comment: req.body.comment.trim(),
+				rating: req.body.rating
 			});
 			
-			server.save();
+			server.save(function(err) {
+				if(handleError(err, req, res))
+					return
+			});
+			
+			User.findOne({id: server.owner}, function(err, user) {
+				if(handleError(err, req, res))
+					return
+					
+				addNotification(user, {
+					type: 'comment',
+					label: 'server',
+					id: req.params.id
+				}, true);
+			});
+			
 			res.end();
 		});
 	});	
@@ -582,10 +604,11 @@ module.exports = function(app) {
 
 	//form handling
     
-    /*  todo: authenticate this, don't allow posting to servers/new without token 
-		possible exploit: filename.exe
-			real talk though, ip: ../../../?, port: config, filename: .js
+    /*  todo: authenticate this, don't allow posting to servers/new without token
+		edit: ?
 	*/
+	
+	app.get('/
 
 	app.post('/servers/new', function(req, res) {
 		if(!req.user) {
@@ -595,12 +618,22 @@ module.exports = function(app) {
 
 		var busboy = new Busboy({headers: req.headers});
 		var data = {},
-			files = {};
+			files = {},
+			servers = [],
+			curServer;
 
 		busboy
 			.on('field', function(field, val) {
-				if(val)
-					data[field] = val;
+				console.log('got', field, '=', val);
+				
+				if(val) {
+					if(field == 'servernum')
+						servers[val] = curServer = {};
+					else if(field.search(/^server/) > -1)
+						curServer[field.replace(/^server/, '')] = val;
+					else
+						data[field] = val;
+				}
 			})
 
 			.on('file', function(field, file, filename, encoding, mimetype) {
@@ -622,101 +655,122 @@ module.exports = function(app) {
 			})
 
 			.on('finish', function() {
-				data.ip = (data.ip.match(/^[^:]+:\/\//) ? '' : 'http://') + data.ip;
-
-				data.ip = url.parse(data.ip).hostname;
-				data.port = +(data.port || 27015);
+				var checked = 0;
 			
-				if(data.port < 0 || data.port > 65536) {
-					res.redirect('/return?msg=error&location=' + encodeURIComponent('/servers/new'));
-					return
-				}
+				servers.forEach(function(server) {
+					server.ip = (server.ip.match(/^[^:]+:\/\//) ? '' : 'http://') + server.ip;
 
-				dns.lookup(data.ip, 4, function(err, ip) {
-					if(handleError(err, req, res))
-						return
+					server.ip = url.parse(server.ip).hostname;
+					server.port = +(server.port || 27015);
 
-					if(!ip) {
-						res.redirect('/return?msg=server_offline&location=' + encodeURIComponent('/servers/new'));
+					if(server.port < 0 || server.port > 65536) {
+						res.redirect('/return?msg=error&location=' + encodeURIComponent('/servers/new'));
 						return
 					}
-					
-					if(ip !== data.ip) {
-						data.domain = data.ip;
-						data.ip = ip;
-					}
 
-					Server.findOne({ip: data.ip, port: data.port}, function(err, server) {
+					dns.lookup(server.ip, 4, function(err, ip) {
 						if(handleError(err, req, res))
 							return
 
-						if(server) {
-							res.redirect('/return?msg=already_exists&location=' + encodeURIComponent('/servers/' + server._id));
-							return
-						}
-						
-						/* possible exploit
-							data.ip = '../'
-						*/
-
-						var file = files.banner;
-						
-						if(!file || file.mimetype.search('image/.*') < 0) {
-							res.redirect('/return?msg=no_file&location=' + encodeURIComponent('/servers/new'));
+						if(!ip) {
+							res.redirect('/return?msg=server_offline&location=' + encodeURIComponent('/servers/new'));
 							return
 						}
 
-						var newServer = new Server({
-							name: data.name,
-							description: data.desc,
-							website: data.website,
-							fileext: path.extname(file.filename),
-							domain: data.domain,
-							ip: data.ip,
-							port: data.port,
-							owner: req.user.id
-						});
-
-						User.findOne({id: req.user.id}, function(err, user) {
-							if(handleError(err, req, res))
-								return
-
-							if(!user)
-								return; //this should never happen
-
-							user.servers.unshift(newServer._id);
-
-							addActivity(user, {
-								type: 'server',
-								action: 'add',
-								name: data.name,
-								id: newServer._id
-							}, true);
-						});
-
-						newServer.save(function(err) {
-							if(handleError(err, req, res))
-								return
-
-							console.log(' ', 'Server', data.ip + ':' + data.port, '(' + (data.domain ? data.domain + ':' + data.port : ' ') + ')', 'saved');
-							
-							var filename = path.normalize('banners/' + newServer._id + path.extname(file.filename));
-							var filepath = path.join(__dirname, '/../public/', filename);
-
-							fs.writeFile(
-								filepath,
-								file.data,
-								function() {
-									console.log(' ', filename, 'saved');
-								}
-							);
-							
-							sortServers();
-
-							res.redirect('/return?msg=server_added&location=' + encodeURIComponent('/servers/' + newServer._id));
-						});
+						if(ip !== server.ip) {
+							server.domain = server.ip;
+							server.ip = ip;
+						}
+						
+						addAndCheck();
 					});
 				});
+			
+				var addAndCheck = function() {
+					if(++checked == servers.length) {
+						var ips = {};
+						
+						servers.forEach(function(server) {
+							if(!ips[server.ip + server.port])
+								ips[server.ip + server.port] = true;
+							else {
+								res.redirect('/return?msg=error&location=' + encodeURIComponent('/servers/new'));
+								return
+							}
+						});
+						
+						delete ips;
+								
+						console.log(data);
+						console.log(servers);
+
+						Server.findOne({ip: data.ip, port: data.port}, function(err, server) {
+							if(handleError(err, req, res))
+								return
+
+							if(server) {
+								res.redirect('/return?msg=already_exists&location=' + encodeURIComponent('/servers/' + server._id));
+								return
+							}
+
+							var file = files.banner;
+
+							if(!file || file.mimetype.search('image/.*') < 0) {
+								res.redirect('/return?msg=no_file&location=' + encodeURIComponent('/servers/new'));
+								return
+							}
+
+							var newServer = new Server({
+								name: data.name,
+								description: data.desc,
+								website: data.website,
+								fileext: path.extname(file.filename),
+								domain: data.domain,
+								ip: data.ip,
+								port: data.port,
+								owner: req.user.id,
+								added: new Date()
+							});
+
+							User.findOne({id: req.user.id}, function(err, user) {
+								if(handleError(err, req, res))
+									return
+
+								if(!user)
+									return; //this should never happen
+
+								user.servers.unshift(newServer._id);
+
+								addActivity(user, {
+									type: 'server',
+									action: 'add',
+									name: data.name,
+									id: newServer._id
+								}, true);
+							});
+
+							newServer.save(function(err) {
+								if(handleError(err, req, res))
+									return
+
+								console.log(' ', 'Server', data.ip + ':' + data.port, '(' + (data.domain ? data.domain + ':' + data.port : ' ') + ')', 'saved');
+
+								var filename = path.normalize('banners/' + newServer._id + path.extname(file.filename));
+								var filepath = path.join(__dirname, '/../public/', filename);
+
+								fs.writeFile(
+									filepath,
+									file.data,
+									function() {
+										console.log(' ', filename, 'saved');
+									}
+								);
+
+								res.redirect('/return?msg=server_added&location=' + encodeURIComponent('/servers/' + newServer._id));
+							});
+						});
+					}
+				}
 			});
 
 		req.pipe(busboy);
@@ -800,10 +854,6 @@ module.exports = function(app) {
 								return
 
 							if(dupe && dupe._id != req.params.id) {
-								console.log(typeof dupe._id, dupe._id);
-								console.log(typeof req.params.id, req.params.id);
-								console.log(dupe._id == req.params.id);
-								
 								res.redirect('/return?msg=already_exists&location=' + encodeURIComponent('/servers/' + server._id));
 								return
 							}

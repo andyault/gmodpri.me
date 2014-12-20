@@ -8,9 +8,7 @@ var serverSchema = new mongoose.Schema({
 	description: String,
 	fileext: String,
 	website: String,
-	domain: String,
-	ip: String,
-	port: {type: Number, default: 27015},
+	servers: [],
 	owner: String,
 	
 	comments: [],
@@ -21,13 +19,9 @@ var serverSchema = new mongoose.Schema({
 	numPlayers: Number,
 	maxPlayers: Number,
 
+	added: {type: Date, default: 0},
 	updated: {type: Date, default: 0},
 	error: String,
-	votes: {
-		up: {type: Number, default: 0},
-		//down: {type: Number, default: 0}
-	},
-	rank: Number,
 	favorites: {type: Number, default: 0}
 });
 

@@ -21,6 +21,10 @@ footer {
 	padding:10px 0;
 }
 
+footer #info {
+	margin-left:100px;
+}
+
 footer .right {
 	float:right;
 }
@@ -70,6 +74,30 @@ header nav {
 header nav a {
 	display:inline-block;
 	padding:0 10px;
+}
+
+header #number {
+	margin-left:5px;
+	width:30px;
+	height:30px;
+	line-height:30px;
+}
+
+header #notifications {
+	position:absolute;
+	z-index:99;
+	line-height:20px;
+	width:300px;
+	padding:10px;
+	text-align:center;
+}
+
+header #notifications p {
+	line-height:40px;
+}
+
+header #notifications a {
+	padding:0;
 }
 
 server-view {
@@ -149,6 +177,7 @@ p.msg {
 
 comment-view {
 	display:block;
+	position:relative;
 }
 
 comment-view .avatar {
@@ -175,4 +204,16 @@ comment-view .comment {
 	right:-48px;
 	padding-left:12px;
 	padding-right:48px;
+}
+
+comment-view .comment.rated {
+	padding-right:93px;
+}
+
+comment-view .review {
+	position:absolute;
+	width:35px;
+	height:35px;
+	right:0;
+	top:10px;
 }

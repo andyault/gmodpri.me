@@ -104,6 +104,24 @@
 	#addform span.right {
 		padding-left:5px;
 	}
+	
+	#addform .lastIP span input {
+		margin-bottom: 0;
+	}
+	
+	#addform #multiple {
+		text-align:center;
+		font-size:14px;
+		line-height:35px;
+	}
+	
+	#addform #multiple a {
+		cursor:pointer;
+	}
+	
+	#addform #multiple a.red {
+		margin-left:20px;
+	}
 
 	#addform #submit {
 		border:0;
@@ -124,7 +142,7 @@
 
 		<form method="post" action enctype="multipart/form-data">
 			<div class="content left">
-				<input type="text" name="name" placeholder="Server name" ng-value="server.name" required>
+				<input type="text" name="name" placeholder="Name" ng-value="server.name" required>
 				<br />
 				<textarea name="desc" placeholder="Description" required>{{server.description}}</textarea>
 			</div>
@@ -138,10 +156,21 @@
 						<img id="previewimg" ng-src="/banners/{{server._id + server.fileext}}">
 					</div>
 				</div>
+				
+				<input type="url" name="website" placeholder="Website (optional)" ng-value="server.website">
 
-				<span class="part left"><input type="text" name="ip" placeholder="IP Address" ng-value="server.domain || server.ip" required></span>
-				<span class="part right"><input type="text" name="port" placeholder="Port (optional)" ng-value="server.port"></span>
-				<input type="text" name="website" placeholder="Website (optional)" ng-value="server.website">
+				<div ng-repeat="ip in ips" ng-class="{lastIP:$last}">
+					<input type="hidden" name="servernum" ng-value="$index">
+					<input type="text" name="servername" ng-attr-placeholder="Name #{{$index + 1}}" ng-model="ip.name" ng-show="ips.length > 1">
+					<span class="part left"><input type="text" name="serverip" ng-attr-placeholder="IP Address {{ips.length > 1 ? '#' + ($index + 1) : ''}}" ng-model="ip.ip" ng-value="server.domain || server.ip" required></span>
+					<span class="part right"><input type="text" name="serverport" ng-attr-placeholder="Port{{ips.length > 1 ? ' #' + ($index + 1) : ' '}} (optional)" ng-model="ip.port" ng-value="server.port"></span>
+				</div>
+				
+				<div id="multiple">
+					<a class="fg" ng-click="addIP()">{{ips.length > 1 ? 'Add another' : 'More than one server?'}}</a>
+					<a class="fg red" ng-click="popIP()" ng-show="ips.length > 1">Remove</a>
+				</div>
+				
 				<input type="submit" value="Submit" id="submit" class="bg">
 			</div>
 		</form>
