@@ -24,8 +24,14 @@
 				<a href="/" id="logo"></a>
 
 				<nav>
-					<!-- <a href ng-show="user"><i class="fa fa-bell"></i> Notifications</a>
-					<span id="number">3</span> -->
+					<a ng-click="toggleNotifications()" ng-show="user"><i class="fa fa-bell"></i> Notifications <span id="number" class="bg red active" ng-show="unread">{{unread}}</span></a>
+					<div id="notifications" ng-show="showNotifications">
+						<p ng-hide="notifications.length">All good!</p>
+						<p ng-repeat="note in notifications">
+							{{note.str}} <a ng-href="{{note.link}}" class="fg">{{note.label}}</a>
+						</p>
+					</div>
+					
 					<a href="/servers"><i class="fa fa-list-ul"></i> Servers</a>
 					<a href="/login" target="_self" ng-hide="user"><i class="fa fa-steam"></i> Login</a>
 					<a href="/user" ng-show="user"><i class="fa fa-user"></i> My Account</a>

@@ -24,7 +24,6 @@
 
 	#serverinfo #banner {
 		border:1px solid #fff;
-		background:url(/assets/missing.png);
 
 		display:block;
 		width:400px;
@@ -37,10 +36,15 @@
 		width:100%;
 		margin-bottom:10px;
 		table-layout:fixed;
+		border-collapse:collapse;
+	}
+	
+	#serverinfo tr {
+		border-bottom:2px solid #fff;
 	}
 	
 	#serverinfo .clear {
-		height:4px;
+		height:6px;
 		width:100%;
 		display:block;
 	}
@@ -76,6 +80,10 @@
 		margin-left:10px;
 	}
 	
+	#serverinfo #actions.center {
+		text-align:center;
+	}
+	
 	#serverinfo #actions * {
 		cursor:pointer;
 	}
@@ -88,10 +96,6 @@
 	
 	#serverinfo #remove {
 		float:right;
-	}
-
-	#serverinfo .bg {
-		border:1px solid #fff;
 	}
 	
 	#serverinfo #left {
@@ -129,9 +133,28 @@
 		font-size:16px;
 		
 		margin:10px 0;
+		min-width:745px;
+		max-width:745px;
+		min-height:77px;
+	}
+	
+	#serverinfo #commentbox.full {
 		min-width:100%;
 		max-width:100%;
-		min-height:80px;
+	}
+	
+	#serverinfo #review {
+		float:right;
+		display:inline-block;
+		width:35px;
+		vertical-align:top;
+		margin-top:10px;
+	}
+		
+	#serverinfo #review a {
+		border:0;
+		margin-bottom:10px;
+		cursor:pointer;
 	}
 </style>
 
@@ -189,13 +212,9 @@
 			
 			<tr class="clear"></tr>
 			
-			<tr>
-				<td class="label">rank</td>
-				<td>{{server.rank}}</td>
-			</tr>
-			<tr>
-				<td class="label">votes</td>
-				<td>{{server.votes}}</td>
+			<tr ng-show="feedback">
+				<td class="label">feedback</td>
+				<td>{{feedback}}% positive</td>
 			</tr>
 			<tr>
 				<td class="label">favorites</td>
@@ -203,15 +222,11 @@
 			</tr>
 		</table>
 		
-		<div id="actions" ng-show="user && userdata && user.id !== server.owner">
+		<div id="actions" class="center" ng-show="user && !isOwner">
 			<a ng-click="act('fave')" class="bg" ng-class="{red:faved}"><i class="fa fa-heart"></i> {{favemsg}}</a>
-
-			<div id="vote">
-				<a ng-click="act('vote')" class="bg" ng-class="{active:upped}"><i class="fa fa-thumbs-up"></i> {{votemsg}}</a>
-			</div>
 		</div>
 		
-		<div id="actions" ng-show="user && userdata && user.id == server.owner">
+		<div id="actions" ng-show="user && isOwner">
 			<a ng-href="/servers/{{server._id}}/edit" class="bg"><i class="fa fa-edit"></i> Edit server</a>
 			<a ng-href="/servers/{{server._id}}/remove" id="remove" class="bg red"><i class="fa fa-trash"></i> Remove server</a>
 		</div>
@@ -223,15 +238,21 @@
 		</div>
 
 		<div id="comments">
-			<h2>Comments</h2>
+			<h2>Comments &amp; Reviews</h2>
 			
-            <p class="msg" ng-hide="server.comments.length">No comments yet!</p>
+            <p class="msg" ng-hide="server.comments.length">Nothing yet!</p>
 			
 			<comment-view ng-repeat="comment in server.comments"></comment-view>
 
 			<span ng-show="user">
-				<textarea id="commentbox" placeholder="Leave a comment" ng-model="comment"></textarea>
-				<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.length">Submit</a>
+				<textarea ng-class="{full:isOwner}" id="commentbox" ng-attr-placeholder="{{reviewmsg}}" ng-model="comment"></textarea>
+				
+				<div id="review" ng-show="!isOwner">
+					<a class="bg" ng-class="{active:upped}" ng-click="act('upVote')"><i class="fa fa-thumbs-up"></i></a>
+					<a class="bg red" ng-class="{active:dnned}" ng-click="act('dnVote')"><i class="fa fa-thumbs-down"></i></a>
+				</div>
+				
+				<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.trim().length">Submit</a>
 			</span>
 		</div>
 	</div>

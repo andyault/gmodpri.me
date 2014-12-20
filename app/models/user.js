@@ -10,16 +10,16 @@ var userSchema = new mongoose.Schema({
 	firstSeen: {type: Date, default: 0},
 	lastSeen: {type: Date, default: 0},
     
-	votes: {type: String, default: '{}'},
-	lastVote: {
+	/* lastVote: {
 		time: {type: Date, default: 0},
 		server: String
-	},
+	}, */
 
 	comments: [],
 	favorites: {type: String, default: '{}'},
 	servers: [],
 	activity: [],
+	notifications: [],
     
     updated: {type: Date, default: 0},
     error: String

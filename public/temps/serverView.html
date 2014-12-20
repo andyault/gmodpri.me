@@ -2,11 +2,7 @@
 <span ng-hide="server.loading">
 	<a ng-href="/servers/{{server._id}}" title="View server page">
 		<img class="banner" ng-src="/banners/{{server._id + server.fileext}}">
-		<span class="rank" ng-show="server.rank < 10">
-			<i class="fa fa-certificate" ng-show="server.sponsored"></i>
-			<p ng-hide="server.sponsored">#{{server.rank}}</p>
-		</span>
-
+		
 		<span class="info">
 			<p class="title">{{server.name}}</p>
 			<p class="players" ng-hide="server.error">{{server.numPlayers + "/" + server.maxPlayers}} players</p>

@@ -4,6 +4,7 @@
 	}
 
 	#servers .sidebar {
+		position:fixed;
 		width:300px;
 		text-align:center;
 	}
@@ -129,7 +130,7 @@
 
 <section id="servers">
 	<p id="noresults" class="col" ng-hide="results.length">No servers found.</p>
-	<div id="results" class="col" ng-show="results.length">
+	<div id="results" class="col right" ng-show="results.length">
 		<div class="pagination">
 			<a ng-click="setPage(0)" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-double-left"></i></a>
 			<a ng-click="prevPage()" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-left"></i></a>
@@ -138,7 +139,7 @@
 			<a ng-click="setPage(numpages - 1)" ng-class="{disabled:isPage(numpages - 1)}"><i class="fa fa-angle-double-right"></i></a>
 		</div>
 
-		<server-view ng-repeat="server in results | orderBy:sortBy.toLowerCase()"></server-view>
+		<server-view ng-repeat="server in results"></server-view>
 
 		<div class="pagination">
 			<a ng-click="setPage(0)" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-double-left"></i></a>
@@ -166,15 +167,13 @@
 
 		<hr />
 
-		<p>Sort by: <select ng-model="sortBy">
-			<option selected>Rank</option>
-			<option>Players</option>
-			<option>Name</option>
+		<p>Sort by: <select ng-model="sortBy" ng-model="sortBy" ng-change="fetchServers()"
+			ng-options="option.value as option.name for option in sortOptions">
 		</select></p>
 
-		<p>Order by: <select ng-model="orderBy">
+		<p>Order by: <select ng-model="orderBy" ng-change="fetchServers()">
 			<option value selected>Descending</option>
-			<option value=":reverse">Ascending</option>
+			<option value="1">Ascending</option>
 		</select></p>
 
 		<!-- <hr id="hr2" />

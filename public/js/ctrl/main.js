@@ -36,7 +36,7 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 						$http.get('/api/servers/' + id).success(function(server) {
 							$scope.servers[$scope.servers.indexOf(temp)] = server;
 							
-							$scope.servers.sort(function(a, b) {return (a.rank ? a.rank : 11) - (b.rank ? b.rank : 11)});
+							$scope.servers.sort(function(a, b) {return (a.added || 0) - (b.added || 0)});
 						});
 					});
 				});
@@ -80,7 +80,6 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 					}
 						
 					userdata.favorites = JSON.parse(userdata.favorites);
-					userdata.votes = JSON.parse(userdata.votes);
 					
 					userdata.firstSeen = new Date(userdata.firstSeen);
 					userdata.lastSeen = new Date(userdata.lastSeen);
@@ -264,19 +263,21 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 			templateUrl: '/pages/servers.html',
 			controller: function($scope, $http) {
 				var cache = {};
+				var cachenum = 0;
 				
 				$http.get('/api/servers', {params: {amt: $scope.perpage}}).success(function(data) {
-					$scope.results = $scope.servers = [];
+					$scope.results = [];
 					
 					data.results.forEach(function(id, k) {
-						$scope.results[k] = $scope.servers[k] = {loading: true};
+						$scope.results[k] = {loading: true};
 						
 						$http.get('/api/servers/' + id).success(function(server) {
-							cache[id] = $scope.results[k] = $scope.servers[k] = server;
+							cache[id] = $scope.results[k] = server;
 						});
 					});
 
-					$scope.numpages = Math.ceil(data.amt/$scope.perpage);
+					cachenum = data.amt;
+					$scope.numpages = Math.ceil(cachenum/$scope.perpage);
 				});
 
 				$scope.filters = [];
@@ -326,47 +327,45 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 				}
 
 				$scope.fetchServers = function() {
-					var params = {amt: $scope.perpage};
-					var count = 0;
+					var params = {amt: $scope.perpage, sortBy: $scope.sortBy, reverse: $scope.orderBy};
 
 					$scope.filters.forEach(function(e) {
 						params[e.field.toLowerCase()] = e.value.toLowerCase();
-						count++;
 					});
 
-					if(count > 0) {
-						//$scope.results = [];
+					//$scope.results = [];
 						
-						$http.get('/api/servers', {params: params}).success(function(data) {
-							$scope.results = [];
-							
-							data.results.forEach(function(id, k) {
-								if(cache[id]) {
-									$scope.results[k] = cache[id];
-								} else {
-									$scope.results[k] = {loading: true};
-								
-									$http.get('/api/servers/' + id).success(function(server) {
-										cache[id] = $scope.results[k] = server;
-									});
-								}
-							});
+					$http.get('/api/servers', {params: params}).success(function(data) {
+						$scope.results = [];
 
-							$scope.numpages = Math.ceil(data.amt/$scope.perpage);
+						data.results.forEach(function(id, k) {
+							if(cache[id]) {
+								$scope.results[k] = cache[id];
+							} else {
+								$scope.results[k] = {loading: true};
+
+								$http.get('/api/servers/' + id).success(function(server) {
+									cache[id] = $scope.results[k] = server;
+								});
+							}
 						});
-					} else {
-						$scope.results = $scope.servers;
 
-						$scope.numpages = Math.ceil($scope.servers.length/$scope.perpage);
-					}
+						$scope.numpages = Math.ceil(data.amt/$scope.perpage);
+					});
 				}
-
-				$scope.sortBy = "Rank";
+				
+				$scope.sortBy = 'added';
+				$scope.sortOptions = [
+					{name: 'Time', value: 'added'}, 
+					{name: 'Players', value: 'numPlayers'},
+					{name: 'Name', value: 'name'}
+				];
+				
 				$scope.orderBy = "";
 
 				$scope.curpage = 0;
 				$scope.numpages = 0;
-				$scope.perpage = 10;
+				$scope.perpage = 15;
 
 				$scope.pages = function() {
 					var ret = [];
@@ -449,9 +448,17 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 					server.fullip = (server.domain || server.ip) + ':' + server.port;
 					
 					var cache = [];
+					var good = 0;
+					var total = 0;
 					
 					server.comments.forEach(function(comment) {
 						comment.loading = true;
+						
+						if(comment.rating) {
+							total++;
+							if(comment.rating > 0)
+								good++;
+						}
 						
 						if(!cache[comment.author]) {
 							cache[comment.author] = true;
@@ -470,6 +477,8 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 							});
 						}
 					});
+					
+					$scope.feedback = Math.floor((good/total)*100);
 					
 					if(server.website)
 						server.website = (server.website.match(/^[^:]+:\/\//) ? '' : 'http://') + server.website;
@@ -494,77 +503,82 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 						$scope.server.timeago = "now";
 					} else {
 						$scope.server.timeago = seconds + " seconds ago";
-					}
-					
-					var setUserdata = function(userdata) {
-						if(!userdata)
-							return;
-						
-						userdata.favorites = JSON.parse(userdata.favorites);
-						userdata.votes = JSON.parse(userdata.votes);
-
-						$scope.userdata = userdata;
-
-						$scope.faved = userdata.favorites[server._id];
-						$scope.upped = userdata.votes[server._id];
-						
-						$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';
-						$scope.votemsg = $scope.upped ? 'Remove vote' : 'Vote for this server';
-					}						
+					}					
                     
 					if($rootScope.user) {
-						$http.get('/api/userdata/').success(setUserdata);
-					
-						$scope.postComment = function() {
-							var commentbox = document.getElementById('commentbox');
-
-							$scope.server.comments.unshift({
-								author: $rootScope.user.id,
-								time: Date.now(),
-								comment: commentbox.value,
-								userdata: $scope.userdata
-							});
-
-							$http.post('/api/servers/' + $routeParams.id + '/comment', {comment: commentbox.value});
-
-							commentbox.value = '';
-						}
-
-						$scope.act = function(type, e) {
-							// man, clients are annoying
+						var setStuff = function() {
+							var favorites = JSON.parse($rootScope.userdata.favorites);
 							
-							var data = $scope.userdata;
-							var id = server._id;
-				
-							switch(type) {
-								case('fave'):
-									$scope.faved = !$scope.faved;
-									$scope.server.favorites += $scope.faved ? 1 : -1;
-									
-									break
+							$scope.postComment = function() {
+								var commentbox = document.getElementById('commentbox');
+								var rating = ($scope.upped ? 1 : 0) - ($scope.dnned ? 1 : 0);
 
-								case('vote'):
-									var lastVote = $scope.userdata.lastVote;
-									
-									if(lastVote.server != id &&
-									   !$scope.upped && 
-									   (Date.now() - new Date(lastVote.time)) < (24 * 60 * 60 * 1000)) {
-										$location.url('/return?msg=wait&time=' + lastVote.time + '&location=/servers/' + $routeParams.id);
-										return
-									}
-										
-									$scope.upped = !$scope.upped;
-									$scope.server.votes += $scope.upped ? 1 : -1;
-									
-									break
+								$scope.server.comments.unshift({
+									author: $rootScope.user.id,
+									time: Date.now(),
+									comment: commentbox.value,
+									userdata: $rootScope.userdata,
+									rating: rating
+								});
+
+								total++;
+								if(rating > 0)
+									good++;
+
+								$scope.feedback = Math.floor((good/total)*100);
+
+								$http.post('/api/servers/' + $routeParams.id + '/comment', {comment: commentbox.value, rating: rating});
+
+								commentbox.value = '';
 							}
-						
-							$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';
-							$scope.votemsg = $scope.upped ? 'Remove vote' : 'Vote for this server';
-							
-							$http.post('api/servers/' + $routeParams.id, {act: type});
+
+							$scope.isOwner = $scope.server.owner == $rootScope.userdata.id;
+							$scope.faved = favorites[server._id];
+
+							$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';						
+							$scope.reviewmsg = 'Leave your feedback';
+
+							$scope.act = function(type, e) {
+								// man, clients are annoying
+
+								var data = $rootScope.userdata;
+								var id = server._id;
+
+								switch(type) {
+									case('fave'):
+										$scope.faved = !$scope.faved;
+										$scope.server.favorites += $scope.faved ? 1 : -1;
+
+										$http.post('api/servers/' + $routeParams.id, {act: 'fave'});
+
+										break
+
+									case('upVote'):
+										$scope.upped = !$scope.upped;
+										$scope.dnned = false;
+
+										break
+
+									case('dnVote'):
+										$scope.dnned = !$scope.dnned;
+										$scope.upped = false;
+
+										break
+								}
+
+								$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';
+								$scope.reviewmsg = $scope.upped ? 'I like this server!' : ($scope.dnned ? 'I don\'t like this server!' : 'Leave your feedback');
+							}
 						}
 						
+						if($rootScope.userdata) {
+							setStuff();
+						} else {
+							$http.get('/api/userdata').success(function(data) {
+								$rootScope.userdata = data;
+								setStuff();
+							});
+						}
 					}
 				})
 			}
@@ -680,6 +694,50 @@ app.run(function($http, $rootScope) {
 	$http.get('/api/user').success(function(data) {
 		$rootScope.user = data;
 	});
+	
+	$http.get('/api/userdata').success(function(data) {
+		$rootScope.userdata = data;
+		
+		$rootScope.notifications = [];
+		$rootScope.unread = 0;
+		
+		$rootScope.userdata.notifications.forEach(function(note, k) {
+			var ret = {
+				str: 'New comment on your',
+				label: note.label,
+				link: ''
+			};
+			
+			switch(note.label) {
+				case 'server':
+					ret.link = '/servers/' + note.id;
+					
+					break
+				
+				case 'profile':
+					ret.link = '/user/' + note.id;
+					
+					break
+			}
+			
+			$rootScope.notifications[k] = ret;
+			
+			if(note.unread) {
+				$rootScope.unread++;
+				delete note.unread;
+			}
+		});
+	});
+	
+	$rootScope.showNotifications = false;
+	$rootScope.toggleNotifications = function() {
+		$rootScope.showNotifications = !$rootScope.showNotifications;
+		
+		if($rootScope.showNotifications && $rootScope.unread) {
+			$http.post('/api/clearNotifications');
+			$rootScope.unread = 0;
+		}
+	}
 });
 
 /* directives */

@@ -161,7 +161,7 @@
 				
 				<div ng-show="user && user.id !== userdata.id">
 					<textarea id="commentbox" placeholder="Leave a comment" ng-model="comment"></textarea>
-					<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.length">Submit</a>
+					<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.trim().length">Submit</a>
 				</div>
 			</div>
 

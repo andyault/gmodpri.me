@@ -24,8 +24,6 @@ var serverSchema = new mongoose.Schema({
 	added: {type: Date, default: 0},
 	updated: {type: Date, default: 0},
 	error: String,
-	votes: {type: Number, default: 0},
-	rank: Number,
 	favorites: {type: Number, default: 0}
 });
 

@@ -1,11 +1,11 @@
 var passport = require('passport'),
 	http = require('http'),
-	async = require('async'),
 	Busboy = require('busboy'),
 	path = require('path'),
 	url = require('url'),
 	dns = require('dns'),
-	fs = require('fs');
+	fs = require('fs'),
+	chalk = require('chalk');
 
 var Server = require('./models/server'),
 	User = require('./models/user');
@@ -20,13 +20,23 @@ var handleError = function(err, req, res) {
 	if(!err)
 		return
 	
-	if(req)
-		console.log('!', req.ip, req.method, req.url);
-	
-	console.log('!', err.toString());
+	if(req) {
+		if(lastIP !== req.ip) {
+			lastIP = req.ip;
+
+			console.log('\n' + chalk.bold(lastIP + ':'));
+		}
+		
+		console.log(' ', chalk.bgRed(chalk.underline(chalk.bold('Error'), '@', timestamp(), ':')));
+		console.log(' ', ' ', req.method, req.url);
+	}
 	
 	if(err.stack)
-		console.log('!', err.stack);
+		console.log(' ', ' ', chalk.red(err.stack));
+	else
+		console.log(' ', ' ', chalk.red(err.toString()));
+	
+	console.log('');
 	
 	//if(res)
 		//res.redirect('/return?msg=error');
@@ -46,25 +56,23 @@ var addActivity = function(user, info, shouldSave) {
 	}	
 }
 
-var sortServers = function() {
-	Server.find({}, function(err, servers) {
-		if(handleError(err))
-			return
-		
-		if(!servers)
-			return
-		
-		servers.sort(function(a, b) {
-			return b.votes - a.votes;
-		});
-
-		servers.forEach(function(server, rank) {
-			server.rank = parseInt(rank) + 1;
-
-			server.save();
-		});
-	});
+var addNotification = function(user, info, shouldSave) {
+	info.unread = true;
+	
+	user.notifications.unshift(info);
+	
+	user.notifications = user.notifications.slice(0, 5);
+	
+	if(shouldSave) {
+		user.save();
+	}	
 }
+
+var timestamp = function() {
+	var now = new Date();
+	
+	return chalk.blue(now.getMonth() + '/' + now.getDate() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds());
+}	
 
 var lastIP;
 
@@ -72,7 +80,7 @@ module.exports = function(app) {
 	var startTime = Date.now();
 	
 	process.on('uncaughtException', function(err) {
-		console.log('!', 'Uncaught exception!');
+		console.log(chalk.red.underline.bold('!!Uncaught exception!!'), '\n');
 		handleError(err);
 	});
 	
@@ -81,10 +89,11 @@ module.exports = function(app) {
 			if(lastIP !== req.ip) {
 				lastIP = req.ip;
 
-				console.log('\n*', lastIP + ':');
+				console.log('\n' + chalk.bold(lastIP + ':'));
 			}
-
-			console.log(' ', req.method, req.url);
+			
+			console.log(' ', '@', timestamp(), ':');
+			console.log(' ', ' ', req.method, req.url);
 			
 			['params', 'body'].forEach(function(field) {
 				var empty = true;
@@ -100,6 +109,8 @@ module.exports = function(app) {
 					console.log(' ', ' ', field + ':', req[field]);
 				}
 			});
+			
+			console.log('');
 		}
 		
 		req.socket.setMaxListeners(0);
@@ -126,6 +137,8 @@ module.exports = function(app) {
 				}
 			});
 		}
+		
+		//res.cookie('XSRF-TOKEN', req.csrfToken());
 
 		next();
 	});
@@ -185,12 +198,12 @@ module.exports = function(app) {
 	});
 	
 	app.get('/api/info', function(req, res) {
-		var now = new Date();
-		now.setMinutes(now.getMinutes() - 5);
+		var now = new Date(),
+			ret = {startTime: startTime},
+			amt = 0,
+			len = 3;
 		
-		var ret = {startTime: startTime};
-		var amt = 0;
-		var len = 3;
+		now.setMinutes(now.getMinutes() - 5);
 		
 		var addAndCheck = function(key, val) {
 			ret[key] = val;
@@ -226,8 +239,43 @@ module.exports = function(app) {
 		res.json(req.user);
 	});
 	
+	app.post('/api/clearNotifications', function(req, res) {
+		if(!req.user) {
+			res.end();
+			return
+		}
+		
+		User.findOne({id: req.user.id}, function(err, userdata) {
+			if(handleError(err, req, res))
+				return
+				
+			if(!userdata) {
+				res.end()
+				return
+			}
+				
+			userdata.notifications.forEach(function(note, k) {
+				note.unread = false;
+			});
+				
+			userdata.markModified('notifications');
+			
+			userdata.save(function(err, saved) {
+				if(handleError(err, req, res))
+					return
+				
+				res.end();
+			});
+		});
+	});			
+	
 	app.post('/api/users/:id/comment', function(req, res) {
 		if(!req.user) {
+			res.end();
+			return
+		}
+		
+		if(!req.body.comment.trim().length) {
 			res.end();
 			return
 		}
@@ -245,6 +293,12 @@ module.exports = function(app) {
 				author: req.user.id,
 				time: Date.now(),
 				comment: req.body.comment
+			});
+			
+			addNotification(userdata, {
+				type: 'comment',
+				label: 'profile',
+				id: req.params.id
 			});
 			
 			userdata.save(function(err, saved) {
@@ -309,13 +363,20 @@ module.exports = function(app) {
 	//servers
 
 	app.get('/api/servers/', function(req, res) {
-		req.query.amt = +(req.query.amt || 10);
-		req.query.start = Math.max(+(req.query.start || 0), 0);
+		var special = {
+			amt: +(req.query.amt || 10),
+			start: Math.max(+(req.query.start || 0), 0),
+			sortBy: req.query.sortBy || 'added',
+			reverse: !!req.query.reverse
+		};
+		
 		var search = {};
 
 		for(var key in req.query) {
-			if(key !== 'amt' && key !== 'start') {
-				search[key] = new RegExp('.*' + req.query[key] + '.*', 'i');
+			if(req.query.hasOwnProperty(key)) {
+				if(!special.hasOwnProperty(key)) {
+					search[key] = new RegExp('.*' + req.query[key].replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&") + '.*', 'i');
+				}
 			}
 		}
 
@@ -324,70 +385,20 @@ module.exports = function(app) {
 				return
 				
 			servers.sort(function(a, b) {
-				return a.rank - b.rank;
+				var field = special.sortBy;
+				var x = (a[field] || 0);
+				var y = (b[field] || 0);
+				var ret = x < y ? 1 : x > y ? -1 : 0;
+				
+				ret *= special.reverse ? -1 : 1;
+				
+				return ret;
 			});
 			
 			res.json({
 				amt: servers.length,
-				results: servers.slice(req.query.start, req.query.start + req.query.amt).map(function(v) {return v._id})
+				results: servers.slice(special.start, special.start + special.amt).map(function(v) {return v._id})
 			});
-			
-			/*
-
-			res.writeHead(200, {
-				'Content-Type': 'application/json; charset=utf-8',
-				'Transfer-Encoding': 'chunked'
-			});
-
-			res.write('[');
-
-			var count = 0;
-			var addToRes = function(server) {
-				res.write((count++ > 0 ? ', ' : '') + JSON.stringify(server));
-			}
-
-			if(servers.length > 0) {
-				async.each(servers.slice(0, req.query.amt), function(server, cb) {
-					if(server.needsUpdate()) {
-						server.getInfo(function(err, info) {
-							delete server.error;
-
-							if(err) {
-								server.error = err;
-								server.updated = Date.now();
-							} else {
-								for(var key in info) {
-									if(info.hasOwnProperty(key)) {
-										server[key] = info[key];
-									}
-								}
-							}
-
-							server.save(function(err) {
-								if(err)
-									throw err;
-
-								addToRes(server);
-
-								cb();
-							});
-						});
-					} else {
-						addToRes(server);
-
-						cb();
-					}
-				}, function(err) {
-					if(err)
-						throw err;
-
-					res.end(']');
-				});
-			} else {
-				res.end(']');
-			}
-			
-			*/
 		});
 	});
 
@@ -451,10 +462,8 @@ module.exports = function(app) {
 					return
 				
 				var favorites = JSON.parse(userdata.favorites);
-				var votes = JSON.parse(userdata.votes);
-				var vote = votes[id];
 				
-				switch(req.body.act) {
+				switch(req.body.act) { //just in case I guess?
 					case('fave'):
 						if(favorites[id]) {
 							delete favorites[id];
@@ -462,25 +471,6 @@ module.exports = function(app) {
 						} else {
 							favorites[id] = true;
 							server.favorites++;
-						}
-						
-						break
-						
-					case('vote'):						
-						if(vote) {
-							delete votes[id];
-							server.votes--;
-						} else {
-							if(userdata.lastVote.server != id && (Date.now() - userdata.lastVote.time) < 24 * 60 * 60 * 1000)
-								return
-							
-							votes[id] = true;
-							userdata.lastVote = {
-								time: Date.now(),
-								server: id
-							}
-							
-							server.votes++;
 						}
 						
 						break
@@ -496,34 +486,17 @@ module.exports = function(app) {
 							id: id
 						}
 					}
-				} else {
-					if(votes[id]) {
-						info = {
-							type: 'vote',
-							action: 'add',
-							id: id
-						}
-					}
 				}
 				
 				userdata.favorites = JSON.stringify(favorites);
-				userdata.votes = JSON.stringify(votes);
 				
 				if(info) {
 					addActivity(userdata, info);
 				}
 				
-				userdata.save(function(err) {
-					if(handleError(err, req, res))
-						return
-				});
+				userdata.save();
 				
-				server.save(function(err, saved) {
-					if(handleError(err, req, res))
-						return
-					
-					sortServers();
-				});
+				server.save();
 				
 				res.end();
 			});
@@ -532,6 +505,11 @@ module.exports = function(app) {
 	
 	app.post('/api/servers/:id/comment', function(req, res) {
 		if(!req.user) {
+			res.end();
+			return
+		}
+		
+		if(!req.body.comment.trim().length) {
 			res.end();
 			return
 		}
@@ -548,12 +526,24 @@ module.exports = function(app) {
 			server.comments.unshift({
 				author: req.user.id,
 				time: Date.now(),
-				comment: req.body.comment
+				comment: req.body.comment.trim(),
+				rating: req.body.rating
 			});
 			
 			server.save(function(err) {
 				if(handleError(err, req, res))
 					return
+			});
+			
+			User.findOne({id: server.owner}, function(err, user) {
+				if(handleError(err, req, res))
+					return
+					
+				addNotification(user, {
+					type: 'comment',
+					label: 'server',
+					id: req.params.id
+				}, true);
 			});
 			
 			res.end();
@@ -607,8 +597,6 @@ module.exports = function(app) {
 				});
 
 				console.log(' ', 'Server', server.ip + ':' + server.port, '(' + (server.domain ? server.domain + ':' + server.port : ' ') + ')', 'removed');
-				
-				sortServers();
 				
 				res.end('/return?msg=server_deleted');
 			});
@@ -746,8 +734,6 @@ module.exports = function(app) {
 									console.log(' ', filename, 'saved');
 								}
 							);
-							
-							sortServers();
 
 							res.redirect('/return?msg=server_added&location=' + encodeURIComponent('/servers/' + newServer._id));
 						});
@@ -836,10 +822,6 @@ module.exports = function(app) {
 								return
 
 							if(dupe && dupe._id != req.params.id) {
-								console.log(typeof dupe._id, dupe._id);
-								console.log(typeof req.params.id, req.params.id);
-								console.log(dupe._id == req.params.id);
-								
 								res.redirect('/return?msg=already_exists&location=' + encodeURIComponent('/servers/' + server._id));
 								return
 							}

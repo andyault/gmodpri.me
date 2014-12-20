@@ -32,23 +32,19 @@ a {
 	transition-duration:0.25s;
 }
 
-a:hover {
+header a:hover {
 	color:#eee;
 	border-color:#eee;
 }
 
-#number {
-	background:#B5122F;
-	color:#fff;
-	font-size:12px;
-	
-	display:inline-block;
-	vertical-align:middle;
-	line-height:20px;
-	text-align:center;
-	width:20px;
-	height:20px;
-	border-radius:10px;
+header a[ng-click] {
+	cursor:pointer;
+}
+
+header #notifications {
+	background:#fff;
+	border:1px solid #ccc;
+	border-top:0;
 }
 
 .bg {
@@ -85,7 +81,7 @@ a.bg.red:hover {
 	background:#E8173C;
 }
 
-.bg.red.active:hover {
+a.bg.red.active:hover {
 	background:#B5122F;
 }
 
@@ -119,10 +115,6 @@ server-view .rank p {
 	font-size:12px;
 }
 
-server-view .banner {
-	background:url(../assets/missing.png);
-}
-
 server-view .info p {
 	background:#ddd;
 	color:#000;
@@ -152,4 +144,8 @@ comment-view .avatar {
 
 comment-view .datetime {
 	color:#333;
+}
+
+comment-view .review {
+	color:#fff;
 }

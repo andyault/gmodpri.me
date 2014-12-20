@@ -29,20 +29,42 @@
 
 <section ng-hide="servers || sponsored"><p class="msg">Fetching data...</p></section>
 
-<section ng-show="sponsored">
-	<h1>Sponsored Servers</h1>
-	
-	<div class="container">
-		<server-view ng-repeat="server in sponsored" ng-class="{left:$even, right:$odd}"></server-view>
-	</div>
-</section>
+<section>
+	<div ng-show="sponsored">
+		<h1>Sponsored Servers</h1>
 
-<section ng-show="servers" id="top">
-	<h1>Top Servers</h1>
-	
-    <p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
-	
-	<div class="container" ng-show="servers.length">
-		<server-view ng-repeat="server in servers" ng-class="{left:$even, right:$odd}"></server-view>
+		<div class="container">
+			<server-view ng-repeat="server in sponsored" ng-class="{left:$even, right:$odd}"></server-view>
+		</div>
 	</div>
+	
+	<!-- <div>
+		<h1>Featured Servers</h1>
+
+		<p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
+
+		<div class="container" ng-show="servers.length">
+			<server-view ng-repeat="server in servers" ng-class="{left:$even, right:$odd}"></server-view>
+		</div>
+	</div> -->
+	
+	<div id="top">
+		<h1>New Servers</h1>
+
+		<p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
+
+		<div class="container" ng-show="servers.length">
+			<server-view ng-repeat="server in servers" ng-class="{left:$even, right:$odd}"></server-view>
+		</div>
+	</div>
+	
+	<!-- <div>
+		<h1>Random Servers</h1>
+
+		<p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
+
+		<div class="container" ng-show="servers.length">
+			<server-view ng-repeat="server in servers" ng-class="{left:$even, right:$odd}"></server-view>
+		</div>
+	</div> -->
 </section>
