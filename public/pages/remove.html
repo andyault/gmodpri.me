@@ -1,0 +1,24 @@
+<style>
+	.msg {
+		text-align:center;
+	}
+	
+	#prompt p {
+		margin-bottom:20px;
+	}
+	
+	#prompt a {
+		width:100px;
+		cursor:pointer;
+		margin:0 10px;
+	}
+</style>
+
+<section ng-hide="server || error"><p class="msg">Fetching data...</p></section>
+<section ng-show="error"><p class="msg">{{error}}</p></section>
+
+<section id="prompt" class="msg" ng-show="server && !error">
+	<p>Are you sure you want to delete {{server.name}} ({{server.fullip}})? This can't be undone.</p>
+	<a ng-click="remove()" id="yes" class="bg">I'm sure</a>
+	<a ng-href="/servers/{{server._id}}" class="bg red">Not sure</a>
+</section>

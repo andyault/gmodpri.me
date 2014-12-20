@@ -1,0 +1,77 @@
+<style>
+	#sidebar {
+		float:left;
+		width:300px;
+		padding:10px;
+	}
+
+	#settings {
+		border-radius:16px;
+		border-top:16px solid #00A1E4;
+		outline:1px solid #ccc;
+
+		padding:10px;
+	}
+
+	#search, #searchby {
+		border:1px solid #ccc;
+	}
+
+	#sidebar a {
+		color:#00A1E4;
+	}
+
+	#sidebar hr {
+		border-top:1px solid #ccc;
+		margin:10px 0;
+	}
+
+	#search, #sidebar p {
+		margin-bottom:10px;
+	}
+
+	#search {
+		width:100%;
+	}
+
+	#searchby {
+		float:right;
+		width:50%;
+	}
+
+	#results {
+		width:61.8%;
+	}
+
+	#sidebar span {
+		display:inline-block;
+		width:100%;
+		text-align:right;
+	}
+</style>
+
+<section id="searchSect">
+	<div id="sidebar">
+		<div id="settings" class="modal">
+			<input id="search" type="text" placeholder="Search">
+			<p>Search by: <select id="searchby">
+				<option selected>Name</option>
+				<option>Category</option>
+				<option>Map</option>
+				<option>Tags</option>
+			</select></p>
+			<p>Sort by: <select id="searchby">
+				<option selected>Rank</option>
+				<option>Players</option>
+				<option>Name</option>
+			</select></p>
+			<hr />
+			<a href="#">+ Add Filter</a>
+			<hr />
+			<span><a href="#" id="searchbtn">Search</a></span>
+		</div>
+	</div>
+	
+	<div id="results">
+	</div>
+</section>

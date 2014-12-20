@@ -1,0 +1,11 @@
+<span class="loading" ng-show="comment.loading">Loading...</span>
+<span ng-hide="comment.loading">
+	<a class="fg" ng-href="/user/{{comment.author}}">
+		<img class="avatar" ng-src="{{comment.userdata.avatar}}" />
+		<span class="top">{{comment.userdata.displayName}}</span>
+	</a>
+	<span class="datetime top">{{timestamp}}</span>
+	<div class="comment">
+		{{comment.comment}}
+	</div>
+</span>

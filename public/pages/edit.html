@@ -1,0 +1,152 @@
+<style>
+	#addform {
+		font-size:0;
+	}
+
+	#addform #login {
+		font-size:16px;
+		text-align:center;
+	}
+
+	#addform .sub {
+		font-size:14px;
+		color:#aaa;
+	}
+
+	#addform .content {
+		display:inline-block;
+		overflow:hidden;
+		vertical-align:top;
+		padding:10px;
+	}
+
+	#addform .content.left {
+		padding-right:5px;
+		width:771px;
+	}
+
+	#addform .content.right {
+		padding-left:5px;
+		width:429px;
+	}
+
+	#addform span.left {
+		width:61.8%;
+	}
+
+	#addform span.right {
+		width:38.2%;
+	}
+
+	#addform input, #addform textarea, #addform #banner {
+		font-size:16px;
+
+		border:1px solid #666;
+		width:100%;
+		font-size:16px;
+		margin-bottom:10px;
+		padding:5px;
+	}
+
+	#addform textarea {
+		min-height:188px;
+		min-width:100%;
+		max-width:100%;
+	}
+
+	#addform #banner {
+		font-size:16px;
+	}
+
+	#addform #file {
+		position:relative;
+		bottom:3px;
+		font-size:11px;
+		float:right;
+		width:auto;
+		border:0;
+		margin:0;
+	}
+
+	#addform #preview {
+		position:relative;
+		width:400px;
+		height:100px;
+		border:1px dashed;
+		padding:0;
+
+		box-sizing:content-box;
+	}
+
+	#addform #previewmsg {
+		text-align:center;
+		line-height:100px;
+	}
+
+	#addform #previewimg {
+		position:absolute;
+		top:0;
+		right:400px;
+		bottom:100px;
+		left:0;
+		width:400px;
+		height:100px;
+	}
+
+	#addform span.part {
+		display:inline-block;
+	}
+
+	#addform span.left {
+		padding-right:5px;
+	}
+
+	#addform span.right {
+		padding-left:5px;
+	}
+
+	#addform #submit {
+		border:0;
+		color:#fff;
+		padding:0 10px;
+		
+		width:auto;
+		float:right;
+	}
+</style>
+
+<section id="addform">
+	<div id="login" ng-hide="user">You must be logged in to do that!</div>
+
+	<div ng-show="user">
+		<h1>{{title}}</h1>
+		<p class="sub">{{subtitle}}</p>
+
+		<form method="post" action enctype="multipart/form-data">
+			<div class="content left">
+				<input type="text" name="name" placeholder="Server name" ng-value="server.name" required>
+				<br />
+				<textarea name="desc" placeholder="Description" required>{{server.description}}</textarea>
+			</div>
+
+			<div class="content right">
+				<div class="content" id="banner">
+					<p>Banner: <input type="file" name="banner" id="file" accept="image/*" ng-required="!server"></p>
+
+					<div class="content" id="preview">
+						<p class="sub" id="previewmsg">Files should be 400x100, gif, jpeg, png, bmp.</p>
+						<img id="previewimg" ng-src="/banners/{{server._id + server.fileext}}">
+					</div>
+				</div>
+
+				<span class="part left"><input type="text" name="ip" placeholder="IP Address" ng-value="server.domain || server.ip" required></span>
+				<span class="part right"><input type="text" name="port" placeholder="Port (optional)" ng-value="server.port"></span>
+				<input type="text" name="website" placeholder="Website (optional)" ng-value="server.website">
+				<input type="submit" value="Submit" id="submit" class="bg">
+			</div>
+		</form>
+	</div>
+</section>
+
+<script>
+</script>

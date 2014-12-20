@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<base href="/">
+
+<script src="/js/inc/angular.min.js"></script>
+<script src="/js/inc/angular-route.min.js"></script>
+
+<script src="/js/ctrl/main.js"></script>
+
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/layout.css">
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<title>Garry's Mod Servers | GMOD Prime</title>
+</head>
+
+<body ng-app="mainApp">
+	<div class="wrapper">
+		<header>
+			<section>
+				<a href="/" id="logo"></a>
+
+				<nav>
+					<!-- <a href ng-show="user"><i class="fa fa-bell"></i> Notifications</a>
+					<span id="number">3</span> -->
+					<a href="/servers"><i class="fa fa-list-ul"></i> Servers</a>
+					<a href="/login" target="_self" ng-hide="user"><i class="fa fa-steam"></i> Login</a>
+					<a href="/user" ng-show="user"><i class="fa fa-user"></i> My Account</a>
+					<!-- <a href="/logout" target="_self" ng-show="user"><i class="fa fa-power-off"></i> Logout</a> -->
+				</nav>
+			</section>
+		</header>
+
+		<main ng-view>
+		</main>
+	</div>
+	
+	<footer>
+		<section>
+			GMOD Prime &copy; <a class="fg" href="http://andrewault.me">Andrew Ault</a> 2014
+			<span class="right">
+				<a class="fg" href="/terms">User Agreement</a>
+				<a class="fg" href="/privacy">Privacy Policy</a>
+				<a class="fg" href="/contact">Contact</a>
+				<a class="fg" href="/getstarted">Getting Started</a>
+				<a class="fg" href="/faq">FAQ</a>
+				<a class="fg" href="http://www.garrysmod.com/">GMOD</a>
+			</span>
+		</section>
+	</footer>
+</body>
+</html>

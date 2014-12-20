@@ -1,0 +1,243 @@
+<style>
+	#serverinfo #name {
+		text-transform:capitalize;
+		margin-bottom:20px;
+		white-space:nowrap;
+		overflow:hidden;
+		text-overflow:ellipsis;
+	}
+
+	#serverinfo #name.title {
+		text-transform:none;
+	}
+
+	#serverinfo #bigbanner {
+		display:block;
+		width:100%;
+		height:300px;
+	}
+
+	#serverinfo #sidebar {
+		float:right;
+		width:400px;
+	}
+
+	#serverinfo #banner {
+		border:1px solid #fff;
+		background:url(/assets/missing.png);
+
+		display:block;
+		width:400px;
+		height:100px;
+		margin-bottom:10px;
+	}
+
+	#serverinfo table {
+		position:relative;
+		width:100%;
+		margin-bottom:10px;
+		table-layout:fixed;
+	}
+	
+	#serverinfo .clear {
+		height:4px;
+		width:100%;
+		display:block;
+	}
+
+	#serverinfo td {
+		background:#eee;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		padding:4px;
+		height:33.33px;
+		text-align:center;
+	}
+
+	#serverinfo td.label {
+		background:#00A1E4;
+		color:#fff;
+
+		width:30%;
+	}
+
+	#serverinfo td#status span {
+		border-bottom:2px solid #0f0;
+	}
+
+	#serverinfo td#status span.offline {
+		border-bottom:2px solid #f00;
+	}
+	
+	#serverinfo #ext {
+		font-size:14px;
+		margin-left:10px;
+	}
+	
+	#serverinfo #actions * {
+		cursor:pointer;
+	}
+	
+	#serverinfo #vote {
+		display:inline-block;
+		float:right;
+		font-size:0;
+	}
+	
+	#serverinfo #remove {
+		float:right;
+	}
+
+	#serverinfo .bg {
+		border:1px solid #fff;
+	}
+	
+	#serverinfo #left {
+		width:790px;
+	}
+	
+	#serverinfo #desc {
+		margin-bottom:60px;
+	}
+	
+	#serverinfo #desc p {
+		white-space:pre-wrap;
+	}
+	
+	#serverinfo h2 {
+		color:#555;
+		font-size:20px;
+	}
+	
+	#serverinfo #comments {
+		position:relative;
+	}
+	
+	#serverinfo h2 {
+		margin-bottom:20px;
+	}
+	
+	#serverinfo #submit {
+		color:#fff;
+		float:right;
+	}
+	
+	#serverinfo #commentbox {
+		border:1px solid #ccc;
+		font-size:16px;
+		
+		margin:10px 0;
+		min-width:100%;
+		max-width:100%;
+		min-height:80px;
+	}
+</style>
+
+<section ng-hide="server || error"><p class="msg">Fetching data...</p></section>
+<section ng-show="error"><p class="msg">{{error}}</p></section>
+
+<section id="serverinfo" ng-show="server">
+	<h1 id="name" ng-class="{title:server.title}">{{server.title || server.name}} <span ng-show="server.error">- Offline</span></h1>
+
+	<!-- <img id="bigbanner"> -->
+
+	<div id="sidebar">
+		<img id="banner" ng-src="/banners/{{server._id + server.fileext}}">
+
+		<table>
+			<tr>
+				<td class="label">ip</td>
+				<td><a id="ip" class="fg" ng-href="steam://connect/{{server.fullip}}" ng-attr-title="Connect to {{server.name}}">{{server.fullip}}</a></td>
+			</tr>
+			<tr>
+				<td class="label">status</td>
+				<td id="status"><span ng-class="{offline: server.error}">{{server.error ? "offline" : "online"}}</span></td>
+			</tr>
+
+			<tr>
+				<td class="label">last ping</td>
+				<td>{{server.timeago}}</td>
+			</tr>
+			
+			<tr class="clear"></tr>
+			
+			<tr>
+				<td class="label">owner</td>
+				<td><a class="fg" ng-href="/user/{{server.owner}}" title="View profile">{{ownerName}}</a></td>
+			</tr>
+			<tr ng-show="server.website">
+				<td class="label">website</td>
+				<td><a class="fg" ng-href="{{server.website}}" ng-attr-title="{{server.website}}">{{server.website}}</a></td>
+			</tr>
+			
+			<tr class="clear"></tr>
+			
+			<tr ng-hide="server.error">
+				<td class="label">gamemode</td>
+				<td>{{server.game}}</td>
+			</tr>
+			<tr ng-hide="server.error">
+				<td class="label">map</td>
+				<td>{{server.map}}</td>
+			</tr>
+			<tr ng-hide="server.error">
+				<td class="label">players</td>
+				<td>{{server.numPlayers}}/{{server.maxPlayers}}</td>
+			</tr>
+			
+			<tr class="clear"></tr>
+			
+			<tr>
+				<td class="label">rank</td>
+				<td>{{server.rank}}</td>
+			</tr>
+			<tr>
+				<td class="label">votes</td>
+				<td>{{server.votes.up}} up</td> <!--, {{server.votes.down}} down</td> -->
+			</tr>
+			<tr>
+				<td class="label">favorites</td>
+				<td>{{server.favorites}}</td>
+			</tr>
+			<!-- <tr>
+				<td class="label">score</td>
+				<td>{{server.votes.up - server.votes.down}}</td>
+			</tr> -->
+		</table>
+		
+		<div id="actions" ng-show="user && userdata && user.id !== server.owner">
+			<a ng-click="act('fave')" class="bg" ng-class="{red:faved}"><i class="fa fa-heart"></i> {{favemsg}}</a>
+
+			<div id="vote">
+				<a ng-click="act('upVote')" class="bg" ng-class="{active:upped}"><i class="fa fa-thumbs-up"></i> {{votemsg}}</a>
+				<!-- <a ng-click="act('dnVote')" class="bg red" ng-class="{active:dnned}"><i class="fa fa-thumbs-down"></i></a> -->
+			</div>
+		</div>
+		
+		<div id="actions" ng-show="user && userdata && user.id == server.owner">
+			<a ng-href="/servers/{{server._id}}/edit" class="bg"><i class="fa fa-edit"></i> Edit server</a>
+			<a ng-href="/servers/{{server._id}}/remove" id="remove" class="bg red"><i class="fa fa-trash"></i> Remove server</a>
+		</div>
+	</div>
+	
+	<div id="left">
+		<div id="desc">
+			<p>{{server.description}}</p>
+		</div>
+
+		<div id="comments">
+			<h2>Comments</h2>
+			
+            <p class="msg" ng-hide="server.comments.length">No comments yet!</p>
+			
+			<comment-view ng-repeat="comment in server.comments"></comment-view>
+
+			<span ng-show="user">
+				<textarea id="commentbox" placeholder="Leave a comment" ng-model="comment"></textarea>
+				<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.length">Submit</a>
+			</span>
+		</div>
+	</div>
+</section>
