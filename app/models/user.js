@@ -11,6 +11,10 @@ var userSchema = new mongoose.Schema({
 	lastSeen: {type: Date, default: 0},
     
 	votes: {type: String, default: '{}'},
+	lastVote: {
+		time: {type: Date, default: 0},
+		server: String
+	},
 
 	comments: [],
 	favorites: {type: String, default: '{}'},

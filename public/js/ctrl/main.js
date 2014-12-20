@@ -439,7 +439,7 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 
 		.when('/servers/:id', {
 			templateUrl: '/pages/server.html',
-			controller: function($scope, $http, $routeParams, $rootScope) {
+			controller: function($scope, $http, $routeParams, $rootScope, $location) {
 				$http.get('/api/servers/' + $routeParams.id).success(function(server) {
 					if(!server) {
 						$scope.error = "Server not found :(";
@@ -447,7 +447,6 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 					}
 					
 					server.fullip = (server.domain || server.ip) + ':' + server.port;
-					server.score = server.votes.up - server.votes.down;
 					
 					var cache = [];
 					
@@ -507,11 +506,10 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 						$scope.userdata = userdata;
 
 						$scope.faved = userdata.favorites[server._id];
-						$scope.upped = userdata.votes[server._id] > 0;
-						$scope.dnned = userdata.votes[server._id] < 0;
+						$scope.upped = userdata.votes[server._id];
 						
 						$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';
-						$scope.votemsg = $scope.upped ? 'Remove vote' : ($scope.dnned ? 'Change vote' : 'Vote for this server');
+						$scope.votemsg = $scope.upped ? 'Remove vote' : 'Vote for this server';
 					}						
                     
 					if($rootScope.user) {
@@ -526,10 +524,8 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 								comment: commentbox.value,
 								userdata: $scope.userdata
 							});
-							
-							console.log('1234');
 
-							$http.post('/api/servers/' + $routeParams.id + '/comment', {comment: commentbox.value}).success(console.log).error(console.log);
+							$http.post('/api/servers/' + $routeParams.id + '/comment', {comment: commentbox.value});
 
 							commentbox.value = '';
 						}
@@ -543,34 +539,28 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 							switch(type) {
 								case('fave'):
 									$scope.faved = !$scope.faved;
-									
 									$scope.server.favorites += $scope.faved ? 1 : -1;
-									
-									break;
-
-								case('upVote'):
-									//$scope.server.votes.down -= $scope.dnned ? 1 : 0;
-									
-									$scope.upped = !$scope.upped;
-									//$scope.dnned = false;
-									
-									$scope.server.votes.up += $scope.upped ? 1 : -1;
 									
 									break
 
-								/* case('dnVote'):
-									$scope.server.votes.up -= $scope.upped ? 1 : 0;
+								case('vote'):
+									var lastVote = $scope.userdata.lastVote;
 									
-									$scope.dnned = !$scope.dnned;
-									$scope.upped = false;
+									if(lastVote.server != id &&
+									   !$scope.upped && 
+									   (Date.now() - new Date(lastVote.time)) < (24 * 60 * 60 * 1000)) {
+										$location.url('/return?msg=wait&time=' + lastVote.time + '&location=/servers/' + $routeParams.id);
+										return
+									}
+										
+									$scope.upped = !$scope.upped;
+									$scope.server.votes += $scope.upped ? 1 : -1;
 									
-									$scope.server.votes.down += $scope.dnned ? 1 : -1;
-									
-									break */
+									break
 							}
 						
 							$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';
-							$scope.votemsg = $scope.upped ? 'Remove vote' : 'Vote for this server'; //($scope.dnned ? 'Change vote' : 'Vote for this server');
+							$scope.votemsg = $scope.upped ? 'Remove vote' : 'Vote for this server';
 							
 							$http.post('api/servers/' + $routeParams.id, {act: type});
 						}
@@ -636,7 +626,35 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 			controller: function($scope, $location, $timeout) {
 				var query = $location.search();
 
-				$scope.msg = (msgs[query.msg] || "Error: Message not found");
+				if(query.msg == 'wait') {
+					var date = new Date(query.time);
+					date.setDate(date.getDate() + 1);
+					
+					var diff = date - Date.now();
+					
+					var seconds = Math.floor(diff/1000);
+					var minutes = Math.floor(seconds/60);
+					var hours = Math.floor(minutes/60);
+					minutes %= 60;
+					seconds %= 60;
+					
+					var str = ['You must wait'];
+					
+					if(hours)
+						str.push(hours + ' hours' + (minutes ? (seconds ? ',' : ' and') : ''));
+						
+					if(minutes)
+						str.push(minutes + ' minutes' + (seconds ? ' and' : ''));
+					
+					if(seconds)
+						str.push(seconds + ' seconds');
+					
+					str.push('before you can vote again.');
+					
+					$scope.msg = str.join(' ');
+				} else {
+					$scope.msg = (msgs[query.msg] || "Error: Message not found");
+				}				
 
 				$timeout(function() {
 					$location.path(query.location || '/').search({});
@@ -655,6 +673,10 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 /* openid middleware */
 
 app.run(function($http, $rootScope) {
+	$http.get('/api/info').success(function(info) {
+		$rootScope.info = info;
+	});
+	
 	$http.get('/api/user').success(function(data) {
 		$rootScope.user = data;
 	});

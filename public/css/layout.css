@@ -21,6 +21,10 @@ footer {
 	padding:10px 0;
 }
 
+footer #info {
+	margin-left:100px;
+}
+
 footer .right {
 	float:right;
 }

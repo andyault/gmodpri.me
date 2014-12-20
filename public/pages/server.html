@@ -195,24 +195,19 @@
 			</tr>
 			<tr>
 				<td class="label">votes</td>
-				<td>{{server.votes.up}} up</td> <!--, {{server.votes.down}} down</td> -->
+				<td>{{server.votes}}</td>
 			</tr>
 			<tr>
 				<td class="label">favorites</td>
 				<td>{{server.favorites}}</td>
 			</tr>
-			<!-- <tr>
-				<td class="label">score</td>
-				<td>{{server.votes.up - server.votes.down}}</td>
-			</tr> -->
 		</table>
 		
 		<div id="actions" ng-show="user && userdata && user.id !== server.owner">
 			<a ng-click="act('fave')" class="bg" ng-class="{red:faved}"><i class="fa fa-heart"></i> {{favemsg}}</a>
 
 			<div id="vote">
-				<a ng-click="act('upVote')" class="bg" ng-class="{active:upped}"><i class="fa fa-thumbs-up"></i> {{votemsg}}</a>
-				<!-- <a ng-click="act('dnVote')" class="bg red" ng-class="{active:dnned}"><i class="fa fa-thumbs-down"></i></a> -->
+				<a ng-click="act('vote')" class="bg" ng-class="{active:upped}"><i class="fa fa-thumbs-up"></i> {{votemsg}}</a>
 			</div>
 		</div>
 		

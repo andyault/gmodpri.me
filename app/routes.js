@@ -20,7 +20,9 @@ var handleError = function(err, req, res) {
 	if(!err)
 		return
 	
-	console.log('!', req.ip, req.method, req.url);
+	if(req)
+		console.log('!', req.ip, req.method, req.url);
+	
 	console.log('!', err.toString());
 	
 	if(err.stack)
@@ -53,7 +55,7 @@ var sortServers = function() {
 			return
 		
 		servers.sort(function(a, b) {
-			return (b.votes.up - b.votes.down) - (a.votes.up - a.votes.down);
+			return b.votes - a.votes;
 		});
 
 		servers.forEach(function(server, rank) {
@@ -68,6 +70,11 @@ var lastIP;
 
 module.exports = function(app) {
 	var startTime = Date.now();
+	
+	process.on('uncaughtException', function(err) {
+		console.log('!', 'Uncaught exception!');
+		handleError(err);
+	});
 	
 	app.use(function(req, res, next) {
 		if(req.method != 'GET') {
@@ -177,9 +184,41 @@ module.exports = function(app) {
 		res.redirect('/return?msg=logged_out');
 	});
 	
-	app.get('/api/status', function(req, res) {
-		res.json({
-			startTime: startTime
+	app.get('/api/info', function(req, res) {
+		var now = new Date();
+		now.setMinutes(now.getMinutes() - 5);
+		
+		var ret = {startTime: startTime};
+		var amt = 0;
+		var len = 3;
+		
+		var addAndCheck = function(key, val) {
+			ret[key] = val;
+			
+			if(++amt == len) {
+				res.json(ret);
+			}
+		}
+		
+		User.find({}, function(err, users) {
+			if(handleError(err, req, res))
+				return
+				
+			addAndCheck('users', (users ? users.length : 0));
+		});
+		
+		User.find({lastSeen: {$gt: now}}, function(err, active) {
+			if(handleError(err, req, res))
+				return
+				
+			addAndCheck('active', (active ? active.length: 0));
+		});
+		
+		Server.find({}, function(err, servers) {
+			if(handleError(err, req, res))
+				return
+				
+			addAndCheck('servers', (servers ? servers.length : 0));
 		});
 	});
 
@@ -427,34 +466,24 @@ module.exports = function(app) {
 						
 						break
 						
-					case('upVote'):
-						if(vote && vote > 0) {
+					case('vote'):						
+						if(vote) {
 							delete votes[id];
-							server.votes.up--;
+							server.votes--;
 						} else {
-							/* if(vote && vote < 0) {
-								server.votes.down--;
-							} */
+							if(userdata.lastVote.server != id && (Date.now() - userdata.lastVote.time) < 24 * 60 * 60 * 1000)
+								return
 							
-							votes[id] = 1;
-							server.votes.up++;
+							votes[id] = true;
+							userdata.lastVote = {
+								time: Date.now(),
+								server: id
+							}
+							
+							server.votes++;
 						}
 						
 						break
-					
-					/* case('dnVote'):
-						if(vote && vote < 0) {
-							delete votes[id];
-							server.votes.down--;
-						} else {
-							if(vote && vote > 0) {
-								server.votes.up--;
-							}
-							votes[id] = -1;
-							server.votes.down++;
-						}
-						
-						break */
 				}
 				
 				var info;
@@ -471,7 +500,7 @@ module.exports = function(app) {
 					if(votes[id]) {
 						info = {
 							type: 'vote',
-							action: 'add', //(votes[id] > 0 ? 'add' : 'delete'),
+							action: 'add',
 							id: id
 						}
 					}
@@ -522,7 +551,11 @@ module.exports = function(app) {
 				comment: req.body.comment
 			});
 			
-			server.save();
+			server.save(function(err) {
+				if(handleError(err, req, res))
+					return
+			});
+			
 			res.end();
 		});
 	});	
@@ -574,6 +607,8 @@ module.exports = function(app) {
 				});
 
 				console.log(' ', 'Server', server.ip + ':' + server.port, '(' + (server.domain ? server.domain + ':' + server.port : ' ') + ')', 'removed');
+				
+				sortServers();
 				
 				res.end('/return?msg=server_deleted');
 			});
@@ -674,7 +709,8 @@ module.exports = function(app) {
 							domain: data.domain,
 							ip: data.ip,
 							port: data.port,
-							owner: req.user.id
+							owner: req.user.id,
+							added: new Date()
 						});
 
 						User.findOne({id: req.user.id}, function(err, user) {

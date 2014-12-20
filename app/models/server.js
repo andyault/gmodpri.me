@@ -21,12 +21,10 @@ var serverSchema = new mongoose.Schema({
 	numPlayers: Number,
 	maxPlayers: Number,
 
+	added: {type: Date, default: 0},
 	updated: {type: Date, default: 0},
 	error: String,
-	votes: {
-		up: {type: Number, default: 0},
-		//down: {type: Number, default: 0}
-	},
+	votes: {type: Number, default: 0},
 	rank: Number,
 	favorites: {type: Number, default: 0}
 });
