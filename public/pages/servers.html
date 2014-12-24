@@ -151,7 +151,7 @@
 	</div>
 
 	<div class="col sidebar left" id="settings">
-		<div id="newdiv" ng-class="{show:user}"><a href="/servers/new" id="new" class="bg"><i class="fa fa-plus"></i> Add a Server</a></div>
+		<div id="newdiv" ng-class="{show:user}"><a href="/servers/new" id="new" class="bg red"><i class="fa fa-plus"></i> Add a Server</a></div>
 
 		<div class="filter" ng-repeat="filter in filters" ng-hide="filter.hidden">
 			<input id="search" type="text" placeholder="Search" ng-model="filter.value" ng-change="fetchServers()">

@@ -417,23 +417,7 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 		})
 
 		.when('/servers/new', {
-			templateUrl: '/pages/edit.html',
-			controller: function($scope) {
-				$scope.title = 'Add a server';
-				$scope.subtitle = 'Adding servers that you do not own and attempting to upload malicious files will result in a temporary ban. Repeat offenses will result in a permanent ban.';
-					
-				document.getElementById('file').onchange = function() {
-					if(this.files && this.files[0]) {
-						var reader = new FileReader();
-
-						reader.onload = function (e) {
-							document.getElementById('previewimg').src = e.target.result;
-						}
-
-						reader.readAsDataURL(this.files[0]);
-					}
-				}
-			}
+			template: '<p>Adding servers is currently disabled because I\'m not sure how the next update is gonna be. Sorry!</p>',
 		})
 
 		.when('/servers/:id', {
