@@ -1,7 +1,7 @@
 var express = require('express'),
 	bodyParser = require('body-parser'),
 	methodOverride = require('method-override'),
-	session = require('cookie-session'),
+	cookieSession = require('cookie-session'),
 	passport = require('passport'),
 	steam = require('passport-steam'),
 	mongoose = require('mongoose'),
@@ -47,20 +47,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(methodOverride('X-HTTP-Method-Override'));
 
-app.use(session({
-	secret: 'plod.gator'
-}));
-
 app.use(cookieParser('plod.gator'));
 
-app.use(csrf({
-	value: function(req) {
-		return (req.body && req.body._csrf) ||
-			(req.query && req.query._csrf) ||
-			req.headers['x-csrf-token'] ||
-			req.headers['x-xsrf-token'];
-	}
+app.use(cookieSession({
+	secret: 'plod.gator',
+	saveUninitialized: true,
+	resave: true
 }));
+
+app.use(csrf());
 
 app.use(passport.initialize());
 app.use(passport.session());

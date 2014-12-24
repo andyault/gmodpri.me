@@ -422,6 +422,9 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 				$scope.title = 'Add a community';
 				$scope.subtitle = 'Adding servers that you do not own and attempting to upload malicious files will result in a temporary ban. Repeat offenses will result in a permanent ban.';
 				
+				var token = document.cookie.match(/XSRF-TOKEN=([^;]*)/)[1]; //I hate this
+				$scope.action = '/servers/new?_csrf=' + encodeURIComponent(token);
+				
 				$scope.ips = [{}];
 				
 				$scope.addIP = function() {

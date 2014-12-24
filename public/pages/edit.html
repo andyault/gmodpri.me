@@ -140,7 +140,7 @@
 		<h1>{{title}}</h1>
 		<p class="sub">{{subtitle}}</p>
 
-		<form method="post" action enctype="multipart/form-data">
+		<form method="post" ng-attr-action="{{action}}" enctype="multipart/form-data">
 			<div class="content left">
 				<input type="text" name="name" placeholder="Name" ng-value="server.name" required>
 				<br />
