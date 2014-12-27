@@ -1,6 +1,21 @@
-var express = require('express');
+var express = require('express'),
+	http = require('http');
 
 var User = require('../models/user');
+
+var config = require('../../config');
+
+var addNotification = function(user, info, shouldSave) {
+	info.unread = true;
+	
+	user.notifications.unshift(info);
+	
+	user.notifications = user.notifications.slice(0, 5);
+	
+	if(shouldSave) {
+		user.save();
+	}	
+}
 
 var router = express.Router();
 
@@ -70,12 +85,9 @@ router.post('/api/users/:id/comment', function(req, res) {
 			id: req.params.id
 		});
 
-		userdata.save(function(err, saved) {
-			if(handleError(err, req, res))
-				return
-
-			res.json(saved);
-		});
+		userdata.save();
+		
+		res.json(userdata);
 	});
 });		
 
@@ -97,32 +109,12 @@ router.get('/api/userdata/:id?', function(req, res) {
 		}
 
 		if(userdata.needsUpdate()) {
-			http.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?' +
-					 'key=' + config.apiKey + '&' +
-					 'steamids=' + req.params.id,
-				function(steamRes) {
-					steamRes.on('data', function(chunk) {
-						var json = JSON.parse(chunk);
-						var data = json.response.players[0];
-
-						if(!data || userdata.id !== data.steamid) { //vulnerability maybe?
-							res.end();
-							return
-						}
-
-						userdata.displayName = data.personaname;
-						userdata.avatar = data.avatarfull;
-						userdata.updated = Date.now();
-
-						userdata.save(function(err) {
-							if(err)
-								throw err;
-
-							res.json(userdata);
-						});
-					});
-				}
-			);
+			userdata.updateInfo(function(err, data) {
+				if(err)
+					throw err;
+				
+				res.json(data);
+			});
 		} else {
 			res.json(userdata);
 		}

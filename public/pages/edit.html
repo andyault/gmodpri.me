@@ -144,7 +144,7 @@
 			<div class="content left">
 				<input type="text" name="name" placeholder="Name" ng-value="server.name" required>
 				<br />
-				<textarea name="desc" placeholder="Description" required>{{server.description}}</textarea>
+				<textarea name="desc" placeholder="Description" required>{{community.description}}</textarea>
 			</div>
 
 			<div class="content right">
@@ -153,7 +153,7 @@
 
 					<div class="content" id="preview">
 						<p class="sub" id="previewmsg">Files should be 400x100, gif, jpeg, png, bmp.</p>
-						<img id="previewimg" ng-src="/banners/{{server._id + server.fileext}}">
+						<img id="previewimg" ng-src="/banners/{{server._id + community.fileext}}">
 					</div>
 				</div>
 				
@@ -161,7 +161,7 @@
 
 				<div ng-repeat="ip in ips" ng-class="{lastIP:$last}">
 					<input type="hidden" name="servernum" ng-value="$index">
-					<input type="text" name="servername" ng-attr-placeholder="Name #{{$index + 1}}" ng-model="ip.name" ng-show="ips.length > 1">
+					<input type="text" name="servername" ng-attr-placeholder="Name #{{$index + 1}}" ng-model="ip.name" ng-show="ips.length > 1" ng-attr-required="ips.length > 1">
 					<span class="part left"><input type="text" name="serverip" ng-attr-placeholder="IP Address {{ips.length > 1 ? '#' + ($index + 1) : ''}}" ng-model="ip.ip" ng-value="server.domain || server.ip" required></span>
 					<span class="part right"><input type="text" name="serverport" ng-attr-placeholder="Port{{ips.length > 1 ? ' #' + ($index + 1) : ' '}} (optional)" ng-model="ip.port" ng-value="server.port"></span>
 				</div>

@@ -1,5 +1,7 @@
 var chalk = require('chalk');
 
+var User = require('./models/user');
+
 var lastIP,
 	methods = {
 		GET: true,
@@ -8,7 +10,11 @@ var lastIP,
 	},
 	fields = ['params', 'body'];
 
-var User = require('./models/user');
+var timestamp = function() {
+	var now = new Date();
+	
+	return chalk.blue(now.getMonth() + '/' + now.getDate() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds());
+}
 
 module.exports = function(app) {
 	process.on('uncaughtException', function(err) {
@@ -51,18 +57,6 @@ module.exports = function(app) {
 			console.log('');
 		}
 		
-		/* req.socket.setMaxListeners(0);
-		
-		req.socket.once('timeout', function() {
-			//handleError('ETIMEDOUT', req, res);
-			return
-		});
-		
-		req.socket.once('error', function(err) {
-			handleError(err, req, res);
-			return
-		}); */
-		
 		if(req.user) {
 			User.findOne({id: req.user.id}, function(err, userdata) {
 				if(err)
@@ -81,6 +75,8 @@ module.exports = function(app) {
 	app.use('/', require('./routes/auth'));
 	app.use('/', require('./routes/api'));
 	app.use('/', require('./routes/users'));
+	app.use('/', require('./routes/communities'));
+	app.use('/', require('./routes/forms'));
 
 	app.get('*', function(req, res) {
 		res.cookie('XSRF-TOKEN', req.csrfToken());

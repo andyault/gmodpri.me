@@ -1,5 +1,7 @@
 var mongoose = require('mongoose'),
-	steam = require('../steam-server-status');
+	steam = require('../steam-server-status'),
+	fs = require('fs'),
+	util = require('util');
 
 var config = require('../../config');
 
@@ -32,39 +34,39 @@ var communitySchema = new mongoose.Schema({
 	favorites: {type: Number, default: 0}
 });
 
-communitySchema.methods.needsUpdate = function(cb) {
+communitySchema.methods.needsUpdate = function() {
+	var community = this;
 	//this isn't the best place to do this but it has to be done
 	
-	if(this.ip && this.port) {
-		this.servers.unshift({name: this.name, ip: this.ip, port: this.port});
+	if(community.ip && community.port) {
+		community.servers.unshift({name: community.name, ip: community.ip, port: community.port});
 		
-		delete this.ip;
-		delete this.port;
+		delete community.ip;
+		delete community.port;
 		
-		this.markModified('servers');
-		this.markModified('ip');
-		this.markModified('port');
+		community.markModified('servers');
+		community.markModified('ip');
+		community.markModified('port');
 		
-		this.save();
+		community.save();
 	}
 	
-	return (Date.now() - this.updated.getTime() > config.serverPollInterval);
+	return (Date.now() - community.updated.getTime() > config.serverPollInterval);
 }
 
-communitySchema.methods.getInfo = function(num, cb) {
+communitySchema.methods.getInfo = function(num, callback) {
+	var community = this;
+	
 	if(typeof num !== 'number')
 		num = 0;
 	
-	if(typeof cb !== 'function')
-		cb = function() {};
-	
-	var server = this.servers[num]
+	var server = community.servers[num]
 	
 	if(!server)
-		return cb();
+		return callback();
 	
 	steam.getServerStatus(server.ip, server.port, function(newdata) {
-		cb(newdata.error, {
+		callback(newdata.error, {
 			title: newdata.serverName,
 			map: newdata.map,
 			game: newdata.gameDescription,
@@ -76,13 +78,14 @@ communitySchema.methods.getInfo = function(num, cb) {
 	});
 }
 
-communitySchema.methods.updateServers = function(num, cb) {
+communitySchema.methods.updateServers = function(callback) {
+	var community = this;
 	var done = 0;
 	
-	for(var i = 0; i < this.servers.length; i++) {
-		var server = this.servers[i];
+	for(var i = 0; i < community.servers.length; i++) {
+		var server = community.servers[i];
 		
-		this.getInfo(i, function(err, info) {
+		community.getInfo(i, function(err, info) {
 			server.error = null;
 
 			if(err) {
@@ -97,14 +100,11 @@ communitySchema.methods.updateServers = function(num, cb) {
 				}
 			}
 
-			this.save(function(err) {
-				if(err)
-					throw err;
+			if(++done === community.servers.length) {
+				community.updated = new Date();
 				
-				if(++done === this.servers.length) {
-					cb();
-				}
-			});
+				community.save(callback);
+			}
 		});
 	};
 }
