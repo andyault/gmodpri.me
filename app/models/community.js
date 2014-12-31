@@ -36,22 +36,8 @@ var communitySchema = new mongoose.Schema({
 
 communitySchema.methods.needsUpdate = function() {
 	var community = this;
-	//this isn't the best place to do this but it has to be done
 	
-	if(community.ip && community.port) {
-		community.servers.unshift({name: community.name, ip: community.ip, port: community.port});
-		
-		delete community.ip;
-		delete community.port;
-		
-		community.markModified('servers');
-		community.markModified('ip');
-		community.markModified('port');
-		
-		community.save();
-	}
-	
-	return (Date.now() - community.updated.getTime() > config.serverPollInterval);
+	return (Date.now() - community.updated.getTime() > config.communityPollInterval);
 }
 
 communitySchema.methods.getInfo = function(num, callback) {
@@ -60,7 +46,7 @@ communitySchema.methods.getInfo = function(num, callback) {
 	if(typeof num !== 'number')
 		num = 0;
 	
-	var server = community.servers[num]
+	var server = community.servers[num];
 	
 	if(!server)
 		return callback();
@@ -82,10 +68,8 @@ communitySchema.methods.updateServers = function(callback) {
 	var community = this;
 	var done = 0;
 	
-	for(var i = 0; i < community.servers.length; i++) {
-		var server = community.servers[i];
-		
-		community.getInfo(i, function(err, info) {
+	community.servers.forEach(function(server, num) {
+		community.getInfo(num, function(err, info) {
 			server.error = null;
 
 			if(err) {
@@ -101,12 +85,14 @@ communitySchema.methods.updateServers = function(callback) {
 			}
 
 			if(++done === community.servers.length) {
+				community.markModified('servers');
+				
 				community.updated = new Date();
 				
 				community.save(callback);
 			}
 		});
-	};
+	});
 }
 
 module.exports = mongoose.model('Community', communitySchema);

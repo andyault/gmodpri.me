@@ -1,128 +1,128 @@
 <style>
-	#servers .col {
+	#communities .col {
 		display:inline-block;
 	}
 
-	#servers .sidebar {
+	#communities .sidebar {
 		position:fixed;
 		width:300px;
 		text-align:center;
 	}
 
-	#servers .left {
+	#communities .left {
 		float:left;
 	}
 
-	#servers .right {
+	#communities .right {
 		float:right;
 	}
 
-	#servers #newdiv {
+	#communities #newdiv {
 		text-align:center;
 		margin-bottom:50px;
 		visibility:hidden;
 	}
 
-	#servers #newdiv.show {
+	#communities #newdiv.show {
 		visibility:visible;
 	}
 
-	#servers #new {
+	#communities #new {
 		display:inline-block;
 		color:#fff !important;
 	}
 
-	#servers #noresults, #servers #results {
+	#communities #noresults, #communities #results {
 		width:900px;
 		text-align:center;
 	}
 
-	#servers server-view {
+	#communities community-view {
 		display:inline-block;
 		margin:10px 0;
 		text-align:left;
 	}
 
-	#servers .pagination {
+	#communities .pagination {
 		text-align:center;
 		margin-bottom:10px;
 	}
 
-	#servers .pagination a {
+	#communities .pagination a {
 		color:#666;
 		cursor:pointer;
 	}
 
-	#servers .pagination i {
+	#communities .pagination i {
 		padding:0 5px;
 	}
 
-	#servers .pagination .page {
+	#communities .pagination .page {
 		margin:0 5px;
 	}
 
-	#servers .pagination .active {
+	#communities .pagination .active {
 		text-decoration:underline;
 	}
 
-	#servers .pagination .disabled {
+	#communities .pagination .disabled {
 		color:#ccc;
 		cursor:default;
 	}
 
-	#servers #settings {
+	#communities #settings {
 		text-align:left;
 	}
 
-	#servers #settings input, #servers #settings select {
+	#communities #settings input, #communities #settings select {
 		font-size:16px;
 		border:1px solid #ccc;
 	}
 
-	#servers #settings #search {
+	#communities #settings #search {
 		width:100%;
 		padding:0 5px;
 	}
 
-	#servers #settings #remove {
+	#communities #settings #remove {
 		float:right;
 	}
 
-	#servers #settings #search, #servers #settings p {
+	#communities #settings #search, #communities #settings p {
 		margin-bottom:10px;
 	}
 
-	#servers #settings select {
+	#communities #settings select {
 		float:right;
 		width:50%;
 	}
 
-	#servers #settings a, #servers .pagination .page {
+	#communities #settings a, #communities .pagination .page {
 		color:#00A1E4;
 	}
 
-	#servers #settings hr {
+	#communities #settings hr {
 		border-top:1px solid #ccc;
 		margin:10px 0;
 	}
 
-	#servers #settings .criteria {
+	#communities #settings .criteria {
 		margin-bottom:10px;
 	}
 
-	#servers #settings .criteria.last {
+	#communities #settings .criteria.last {
 		margin-bottom:0;
 	}
 
-	#servers #settings .hidden {
+	#communities #settings .hidden {
 		visibility:hidden;
 	}
 
-	#servers #settings #hr2 {
+	#communities #settings #hr2 {
 		margin-top:15px;
 	}
 
-	#servers #categories {
+	#communities #categories {
 		list-style:none;
 		padding-left:20px;
 	}
@@ -130,8 +130,8 @@
 
 <section ng-hide="results"><p class="msg">Fetching data...</p></section>
 
-<section id="servers" ng-show="results">
-	<p id="noresults" class="col right" ng-hide="results.length">No servers found.</p>
+<section id="communities" ng-show="results">
+	<p id="noresults" class="col right" ng-hide="results.length">No communities found.</p>
 	<div id="results" class="col right" ng-show="results.length">
 		<div class="pagination">
 			<a ng-click="setPage(0)" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-double-left"></i></a>
@@ -141,7 +141,7 @@
 			<a ng-click="setPage(numpages - 1)" ng-class="{disabled:isPage(numpages - 1)}"><i class="fa fa-angle-double-right"></i></a>
 		</div>
 
-		<server-view ng-repeat="server in results"></server-view>
+		<community-view ng-repeat="community in results"></community-view>
 
 		<div class="pagination">
 			<a ng-click="setPage(0)" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-double-left"></i></a>
@@ -153,12 +153,12 @@
 	</div>
 
 	<div class="col sidebar left" id="settings">
-		<div id="newdiv" ng-class="{show:user}"><a href="/community/new" id="new" class="bg"><i class="fa fa-plus"></i> Add a Server</a></div>
+		<div id="newdiv" ng-class="{show:user}"><a href="/community/new" id="new" class="bg"><i class="fa fa-plus"></i> Add a Community</a></div>
 
 		<div class="filter" ng-repeat="filter in filters" ng-hide="filter.hidden">
-			<input id="search" type="text" placeholder="Search" ng-model="filter.value" ng-change="fetchServers()">
+			<input id="search" type="text" placeholder="Search" ng-model="filter.value" ng-change="fetchCommunities()">
 
-			<p>Search by: <select class="criteria" ng-class="{last: $last}" ng-model="filter.field" ng-change="updateUnused(); fetchServers();"
+			<p>Search by: <select class="criteria" ng-class="{last: $last}" ng-model="filter.field" ng-change="updateUnused(); fetchCommunities();"
 				ng-options="field.value as field.name for field in criteria">
 				</select>
 			</p>
@@ -169,21 +169,13 @@
 
 		<hr />
 
-		<p>Sort by: <select ng-model="sortBy" ng-model="sortBy" ng-change="fetchServers()"
+		<p>Sort by: <select ng-model="sortBy" ng-model="sortBy" ng-change="fetchCommunities()"
 			ng-options="option.value as option.name for option in sortOptions">
 		</select></p>
 
-		<p>Order by: <select ng-model="orderBy" ng-change="fetchServers()">
+		<p>Order by: <select ng-model="orderBy" ng-change="fetchCommunities()">
 			<option value selected>Descending</option>
 			<option value="1">Ascending</option>
 		</select></p>
-
-		<!-- <hr id="hr2" />
-
-		<p>List by category:</p>
-		<ul id="categories">
-			<li><a href>All</a>
-			<li ng-repeat="cat in categories"><a href ng-click="setCategory('{{cat}}')">{{cat}}</a></li>
-		</ul> -->
 	</div>
 </section>

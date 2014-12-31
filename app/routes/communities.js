@@ -3,6 +3,20 @@ var express = require('express');
 var User = require('../models/user'),
 	Community = require('../models/community');
 
+var config = require('../../config');
+
+var addActivity = function(user, info, shouldSave) {
+	info.time = Date.now();
+	
+	user.activity.unshift(info);
+	
+	user.activity = user.activity.slice(0, config.activityLength);
+	
+	if(shouldSave) {
+		user.save();
+	}	
+}
+
 var router = express.Router();
 
 router.get('/api/communities/', function(req, res) {
@@ -63,7 +77,7 @@ router.get('/api/community/:id', function(req, res) {
 	});
 });
 	
-router.post('/api/community/:id', function(req, res) {
+router.post('/api/community/:id/fave', function(req, res) {
 	if(!req.user) {
 		res.end();
 		return
@@ -75,7 +89,7 @@ router.post('/api/community/:id', function(req, res) {
 		if(err)
 			throw err;
 
-		if(!community) { // || server.owner == req.user.id) {
+		if(!community) {
 			res.end();
 			return
 		}
@@ -84,35 +98,24 @@ router.post('/api/community/:id', function(req, res) {
 			if(err)
 				throw err;
 
-			var favorites = JSON.parse(userdata.favorites);
-
-			switch(req.body.act) { //just in case I guess?
-				case('fave'):
-					if(favorites[id]) {
-						delete favorites[id];
-						community.favorites--;
-					} else {
-						favorites[id] = true;
-						community.favorites++;
-					}
-
-					break
-			}
+			var favorites = userdata.favorites,
+				fave = favorites.indexOf(id);
 			
-			if(req.body.act == 'fave') {
-				if(favorites[id]) {
-					addActivity(userdata, {
-						type: 'fave',
-						action: 'add',
-						id: id
-					});
-				}
+			if(fave > -1) {
+				favorites.splice(fave, 1);
+				community.favorites--;
+				
+				addActivity(userdata, {
+					type: 'fave',
+					action: 'add',
+					id: id
+				});
+			} else {
+				favorites.push(id);
+				community.favorites++;
 			}
-
-			userdata.favorites = JSON.stringify(favorites);
 
 			userdata.save();
-
 			community.save();
 
 			res.end();
@@ -149,13 +152,13 @@ router.post('/api/community/:id/comment', function(req, res) {
 
 		community.save();
 
-		User.findOne({id: server.owner}, function(err, user) {
+		User.findOne({id: community.owner}, function(err, user) {
 			if(err)
 				throw err;
 
 			addNotification(user, {
 				type: 'comment',
-				label: 'server',
+				label: 'community',
 				id: req.params.id
 			}, true);
 		});
@@ -180,7 +183,7 @@ router.delete('/api/community/:id', function(req, res) {
 		}
 
 		if(community.owner !== req.user.id) {
-			res.end('/return?msg=not_owner&location=' + encodeURIComponent('/servers/' + server._id));
+			res.end('/return?msg=not_owner&location=' + encodeURIComponent('/community/' + community._id));
 			return;
 		}
 
@@ -192,16 +195,16 @@ router.delete('/api/community/:id', function(req, res) {
 				if(err)
 					throw err;
 
-				var idof = userdata.servers.indexOf(server._id);
+				var idof = userdata.communities.indexOf(community._id);
 
 				while(idof > -1) {
-					userdata.servers.splice(idof, 1);
+					userdata.communities.splice(idof, 1);
 
-					idof = userdata.servers.indexOf(server._id);
+					idof = userdata.communities.indexOf(communities._id);
 				}
 
 				addActivity(userdata, {
-					type: 'server',
+					type: 'community',
 					action: 'delete',
 					name: community.name
 				}, true);
@@ -209,7 +212,7 @@ router.delete('/api/community/:id', function(req, res) {
 
 			console.log(' ', 'Community', community.name, 'removed');
 
-			res.end('/return?msg=server_deleted');
+			res.end('/return?msg=community_deleted');
 		});
 	});
 });

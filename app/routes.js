@@ -13,12 +13,12 @@ var lastIP,
 var timestamp = function() {
 	var now = new Date();
 	
-	return chalk.blue(now.getMonth() + '/' + now.getDate() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds());
+	return chalk.blue.bgWhite(now.getMonth() + '/' + now.getDate() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds());
 }
 
 module.exports = function(app) {
 	process.on('uncaughtException', function(err) {
-		console.log(chalk.red.bold('Error!'), '\n');
+		console.log(chalk.red.bold('Error!'));
 		
 		if(err.stack)
 			console.log(' ', chalk.red(err.stack));
@@ -56,6 +56,8 @@ module.exports = function(app) {
 			
 			console.log('');
 		}
+		
+		//console.log(' ', timestamp(), req.method + ':', req.url);
 		
 		if(req.user) {
 			User.findOne({id: req.user.id}, function(err, userdata) {

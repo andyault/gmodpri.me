@@ -1,0 +1,238 @@
+<style>
+	#info {
+		position:relative;
+	}
+	
+	#info #sidebar {
+		float:right;
+		width:400px;
+	}
+
+	#info #banner {
+		border:1px solid #fff;
+
+		display:block;
+		width:400px;
+		height:100px;
+		margin-bottom:10px;
+	}
+
+	#info table {
+		position:relative;
+		width:100%;
+		margin-bottom:6px;
+		table-layout:fixed;
+		border-collapse:collapse;
+	}
+	
+	#info tr {
+		border-bottom:2px solid #fff;
+	}
+	
+	#info .clear {
+		height:6px;
+		width:100%;
+		display:block;
+	}
+
+	#info td {
+		background:#eee;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		padding:4px;
+		height:33.33px;
+		text-align:center;
+	}
+
+	#info td.label {
+		background:#00A1E4;
+		color:#fff;
+
+		width:30%;
+	}
+	
+	#info td.label.red {
+		background:#B5122F;
+	}
+	
+	#info #actions.center {
+		text-align:center;
+	}
+	
+	#info #actions * {
+		cursor:pointer;
+	}
+	
+	#info #vote {
+		display:inline-block;
+		float:right;
+		font-size:0;
+	}
+	
+	#info #remove {
+		float:right;
+	}
+	
+	#info #left {
+		width:790px;
+	}
+	
+	#info #name {
+		position:absolute;
+		top:0;
+		width:790px;
+		white-space:nowrap;
+		overflow:hidden;
+		text-overflow:ellipsis;
+	}
+	
+	#info #desc {
+		margin:110px 0 60px;
+	}
+	
+	#info #desc p {
+		white-space:pre-wrap;
+	}
+	
+	#info h2 {
+		color:#555;
+		font-size:20px;
+	}
+	
+	#info #comments {
+		position:relative;
+	}
+	
+	#info h2 {
+		margin-bottom:20px;
+	}
+	
+	#info #submit {
+		color:#fff;
+		float:right;
+	}
+	
+	#info #commentbox {
+		border:1px solid #ccc;
+		font-size:16px;
+		
+		margin:10px 0;
+		min-width:745px;
+		max-width:745px;
+		min-height:77px;
+	}
+	
+	#info #commentbox.full {
+		min-width:100%;
+		max-width:100%;
+	}
+	
+	#info #review {
+		float:right;
+		display:inline-block;
+		width:35px;
+		vertical-align:top;
+		margin-top:10px;
+	}
+		
+	#info #review a {
+		border:0;
+		margin-bottom:10px;
+		cursor:pointer;
+	}
+</style>
+
+<section ng-hide="community || error"><p class="msg">Fetching data...</p></section>
+<section ng-show="error"><p class="msg">{{error}}</p></section>
+
+<section id="info" ng-show="community">
+	<div id="sidebar">
+		<img id="banner" ng-src="assets/img/banners/{{community._id + community.fileext}}">
+
+		<table>
+			<tr>
+				<td class="label">owner</td>
+				<td><a class="fg" ng-href="/user/{{community.owner}}" title="View profile">{{community.ownerName}}</a></td>
+			</tr>
+			<tr ng-show="community.website">
+				<td class="label">website</td>
+				<td><a class="fg" ng-href="{{community.website}}" ng-attr-title="{{community.website}}">{{community.website}}</a></td>
+			</tr>
+			
+			<tr>
+				<td class="label">last ping</td>
+				<td>{{community.timeago}}</td>
+			</tr>
+			
+			<tr ng-show="feedback">
+				<td class="label">feedback</td>
+				<td>{{community.feedback.percent}}% positive</td>
+			</tr>
+			<tr>
+				<td class="label">favorites</td>
+				<td>{{community.favorites}}</td>
+			</tr>
+			
+			<tr class="clear" ng-repeat-start="server in community.servers"></tr>
+
+			<tr ng-show="server.name">
+				<td colspan=2 class="label" ng-class="{red:server.error}">{{server.name}}</td>
+			</tr>
+
+			<tr>
+				<td class="label" ng-class="{red:server.error}">ip</td>
+				<td><a class="fg" ng-href="steam://connect/{{server.ip}}:{{server.port}}">{{server.fullip}}</a></td>
+			</tr>
+			<tr ng-hide="server.error">
+				<td class="label">gamemode</td>
+				<td>{{server.game}}</td>
+			</tr>
+			<tr ng-hide="server.error">
+				<td class="label">map</td>
+				<td>{{server.map}}</td>
+			</tr>
+			<tr ng-hide="server.error" ng-repeat-end>
+				<td class="label">players</td>
+				<td>{{server.numPlayers}}/{{server.maxPlayers}}</td>
+			</tr>
+		</table>
+		
+		<div id="actions" class="center" ng-show="user && !isOwner">
+			<a ng-click="act('fave')" class="bg" ng-class="{red:faved}"><i class="fa fa-heart"></i> {{favemsg}}</a>
+		</div>
+		
+		<div id="actions" ng-show="user && isOwner">
+			<a class="bg" ng-href="/community/{{community._id}}/edit"><i class="fa fa-edit"></i> Edit community</a>
+			<a class="bg red" id="remove" ng-href="/community/{{community._id}}/remove"><i class="fa fa-trash"></i> Remove community</a>
+		</div>
+	</div>
+	
+	<div id="left">
+		<h1 id="name">{{community.name}}</h1>
+
+		<div id="desc">
+			<p>{{community.description}}</p>
+		</div>
+
+		<div id="comments">
+			<h2>Comments &amp; Reviews</h2>
+			
+            <p class="msg" ng-hide="community.comments.length">Nothing yet!</p>
+			
+			<comment-view ng-repeat="comment in community.comments"></comment-view>
+
+			<span ng-show="user">
+				<textarea ng-class="{full:isOwner}" id="commentbox" ng-attr-placeholder="{{reviewmsg}}" ng-model="comment"></textarea>
+				
+				<div id="review" ng-show="!isOwner">
+					<a class="bg" ng-class="{active:isRating(1)}" ng-click="setRating(1)"><i class="fa fa-thumbs-up"></i></a>
+					<a class="bg red" ng-class="{active:isRating(-1)}" ng-click="setRating(-1)"><i class="fa fa-thumbs-down"></i></a>
+				</div>
+				
+				<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.trim().length">Submit</a>
+			</span>
+		</div>
+	</div>
+</section>

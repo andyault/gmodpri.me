@@ -102,7 +102,7 @@ router.get('/api/userdata/:id?', function(req, res) {
 	User.findOne({id: req.params.id}, function(err, userdata) {
 		if(err)
 			throw err;
-
+		
 		if(!userdata) {
 			res.end();
 			return
@@ -113,11 +113,13 @@ router.get('/api/userdata/:id?', function(req, res) {
 				if(err)
 					throw err;
 				
-				res.json(data);
+				if(data)
+					res.json(data);
+				else
+					res.json(userdata); //waste of our damn time
 			});
-		} else {
+		} else
 			res.json(userdata);
-		}
 	});
 });
 

@@ -36,7 +36,7 @@ var handleForm = function(req, cb) {
 					servers[val] = curServer = {};
 				else if(field.search(/^server/) > -1)
 					curServer[field.replace(/^server/, '')] = val;
-				else
+				else if(val)
 					data[field] = val;
 			}
 		})
@@ -91,15 +91,6 @@ router.post('/community/new', function(req, res) {
 			dns.lookup(server.ip, 4, function(err, ip) {
 				if(err)
 					throw err;
-
-				/* what's the harm?
-				
-				if(!ip) {
-					res.redirect('/return?msg=server_offline&location=' + encodeURIComponent('/community/new'));
-					return
-				}
-				
-				*/
 
 				if(ip !== server.ip) {
 					server.domain = server.ip;
@@ -165,7 +156,7 @@ router.post('/community/new', function(req, res) {
 						if(err)
 							throw err;
 
-						user.servers.unshift(newCommunity._id);
+						user.communities.unshift(newCommunity._id);
 
 						addActivity(user, {
 							type: 'server',
@@ -186,10 +177,9 @@ router.post('/community/new', function(req, res) {
 						});
 						
 						var filepath = path.join(process.cwd(), '/public/assets/img/banners/', newCommunity._id + newCommunity.fileext);
-
 						fs.writeFile(filepath, file.data);
 
-						res.redirect('/return?msg=server_added&location=' + encodeURIComponent('/community/' + newCommunity._id));
+						res.redirect('/return?msg=community_added&location=' + encodeURIComponent('/community/' + newCommunity._id));
 					});
 				});
 			}
@@ -281,8 +271,9 @@ router.post('/community/:id/edit', function(req, res) {
 						var update = {
 							name: data.name,
 							description: data.desc,
-							website: data.website,
-							servers: servers
+							website: data.website || '',
+							servers: servers,
+							updated: 0
 						}
 
 						var file = files.banner;
@@ -296,15 +287,18 @@ router.post('/community/:id/edit', function(req, res) {
 
 							console.log(' ', 'Community', "'" + community.name + "'", 'edited:');
 
-							community.servers.forEach(function(server) {
+							servers.forEach(function(server) {
 								console.log(' ', ' ', server.ip + ':' + server.port, server.domain ? '(' + server.domain + ':' + server.port + ')' : '');
 							});
+							
+							console.log('')
+							
+							if(file.filename) {
+								var filepath = path.join(process.cwd(), '/public/assets/img/banners/', community._id + community.fileext);
+								fs.writeFile(filepath, file.data);
+							}
 
-							var filepath = path.join(process.cwd(), '/public/assets/img/banners/', community._id + community.fileext);
-
-							fs.writeFile(filepath, file.data);
-
-							res.redirect('/return?msg=server_added&location=' + encodeURIComponent('/community/' + community._id));
+							res.redirect('/return?msg=community_added&location=' + encodeURIComponent('/community/' + community._id));
 						});
 					});
 				}

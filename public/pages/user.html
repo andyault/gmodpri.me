@@ -1,0 +1,181 @@
+<style>
+	#account #sidebar {
+		position:relative;
+		display:inline-block;
+		width:300px;
+		text-align:center;
+	}
+	
+	#account #sidebar #userinfo {
+		position:relative;
+		width:220px;
+		font-size:14px;
+		left:50%;
+		margin-left:-110px;
+	}
+	
+	#account #sidebar .label {
+		text-align:left;
+		color:#999;
+	}
+
+	#account .left {
+		float:left;
+	}
+
+	#account #avatar {
+		border:10px solid #eee;
+
+		position:relative;
+		display:block;
+		width:184px;
+		height:184px;
+		left:50%;
+		margin:0 0 5px -92px;
+	}
+
+	#account #displayname {
+		font-size:18px;
+		margin-bottom:10px;
+	}
+
+	#account #right {
+		display:inline-block;
+		width:900px;
+	}
+
+	#account #navigation {
+		background:#00A1E4;
+
+		height:40px;
+		margin-bottom:10px;
+	}
+
+	#account #navigation a {
+		display:inline-block;
+		height:40px;
+		line-height:40px;
+		padding:0 10px;
+	}
+
+	#account #navigation a:hover {
+		color:#fff;
+	}
+
+	#account #navigation a.active {
+		background:#19BCFF;
+	}
+	
+	#account .msg {
+		text-align:center;
+		padding:20px 0;
+	}
+	
+	#account .action {
+		background: #eee;
+		padding:5px 10px;
+	}
+	
+	#account .action.odd {
+		background: #e5e5e5;
+	}
+	
+	#account .action .icon {
+		margin-right:10px;
+	}
+	
+	#account .action .time {
+		float:right;
+		line-height:24px;
+		font-size:12px;
+		font-weight:bold;
+	}
+	
+	#account #submit {
+		color:#fff;
+		float:right;
+		cursor:pointer;
+	}
+	
+	#account #commentbox {
+		border:1px solid #ccc;
+		font-size:16px;
+		
+		margin:10px 0;
+		min-width:100%;
+		max-width:100%;
+		min-height:80px;
+	}
+	
+	#account #communities, #account #favorites {
+		text-align:center;
+	}
+</style>
+
+<section ng-hide="userdata || error"><p class="msg">Fetching data...</p></section>
+<section ng-show="error"><p class="msg">{{error}}</p></section>
+
+<section id="account" ng-show="userdata">
+	<div id="sidebar" class="left">
+		<a class="fg" ng-href="http://steamcommunity.com/profiles/{{userdata.id}}">
+			<img id="avatar" ng-src="{{userdata.avatar}}" />
+			<p id="displayname">{{userdata.displayName}}</p>
+		</a>
+			
+		<table id="userinfo">
+			<tr>
+				<td class="label">Join date:</td>
+				<td>{{firstSeen}}</td>
+			</tr>
+			<tr>
+				<td class="label">Last Seen:</td>
+				<td>{{lastSeen}}</td>
+			</tr>
+		</table>
+	</div>
+
+	<div id="right">
+		<div id="content">
+			<div id="navigation">
+				<a href ng-click="setTab(0)" ng-class="{active:isTab(0)}">Activity</a>
+				<a href ng-click="setTab(1)" ng-class="{active:isTab(1)}">Comments</a>
+				<a href ng-click="setTab(2)" ng-class="{active:isTab(2)}">Favorites</a>
+				<a href ng-click="setTab(3)" ng-class="{active:isTab(3)}">Communities</a>
+			</div>
+
+			<div id="activity" ng-show="isTab(0)">
+				<p class="msg" ng-hide="userdata.activity.length">{{prefix}} no recent activity!</p>
+				
+                <div class="action" ng-repeat="action in activity" ng-class="{odd:$odd}">
+					<i class="fa icon" ng-class="action.icon"></i>
+					{{action.str}}
+					<a class="fg" ng-show="action.link" ng-href="{{action.link.href}}">{{action.link.label}}</a>
+					<p class="time">{{action.time}}</p>
+				</div>
+			</div>
+
+			<div id="comments" ng-show="isTab(1)">
+                <p class="msg" ng-hide="userdata.comments.length">{{prefix}} no comments yet!</p>
+				
+				<comment-view ng-repeat="comment in userdata.comments"></comment-view>
+				
+				<div ng-show="user && user.id !== userdata.id">
+					<textarea id="commentbox" placeholder="Leave a comment" ng-model="comment"></textarea>
+					<a id="submit" class="bg" ng-click="postComment()" ng-show="comment.trim().length">Submit</a>
+				</div>
+			</div>
+
+			<div id="favorites" ng-show="isTab(2)">
+				<p class="msg" ng-hide="favorites.length">{{prefix}} no favorites yet!</p>
+				
+				<community-view ng-repeat="community in favorites"></community-view>
+			</div>
+
+			<div id="communities" ng-show="isTab(3)">
+				<p class="msg" ng-hide="userdata.communities.length">{{prefix}} no communities yet!</p>
+				
+				<community-view ng-repeat="community in communities"></community-view>
+			</div>
+		</div>
+	</div>
+</section>

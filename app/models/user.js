@@ -1,4 +1,5 @@
-var mongoose = require('mongoose');
+var mongoose = require('mongoose'),
+	http = require('http');
 
 var config = require('../../config');
 
@@ -11,8 +12,8 @@ var userSchema = new mongoose.Schema({
 	lastSeen: {type: Date, default: 0},
 
 	comments: [],
-	favorites: {type: String, default: '{}'},
-	servers: [],
+	favorites: [], //would love for this to be an object, but nope
+	communities: [],
 	activity: [],
 	notifications: [],
     
@@ -23,13 +24,22 @@ var userSchema = new mongoose.Schema({
 userSchema.methods.needsUpdate = function() {
 	var user = this;
 	
-	return (Date.now() - user.updated.getTime() > config.userPollInterval));
+	return (Date.now() - user.updated.getTime() > config.userPollInterval);
 }
 
 userSchema.methods.getInfo = function(callback) {
 	var user = this;
 	
-	http.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?' +
+	var timeout = function(err) {
+		//suppress I guess, steam api probably down
+		
+		if(!err || err.code !== 'ECONNRESET') {
+			req.abort(); //reset the connection
+			callback();
+		}
+	}
+	
+	var req = http.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?' +
 			 'key=' + config.apiKey + '&' +
 			 'steamids=' + user.id,
 		function(steamRes) {
@@ -40,7 +50,9 @@ userSchema.methods.getInfo = function(callback) {
 				callback(data);
 			});
 		}
-	);
+	).on('error', timeout);
+	
+	req.setTimeout(config.userPollTimeout, timeout);
 }
 
 userSchema.methods.updateInfo = function(callback) {

@@ -1,0 +1,13 @@
+
+<span class="loading" ng-show="community.loading">Loading...</span>
+<a ng-href="/community/{{community._id}}" title="View community page" ng-hide="community.loading">
+	<span class="title">{{community.name}}</span>
+	<img class="banner" ng-src="assets/img/banners/{{community._id + community.fileext}}">
+	
+	<span class="info">
+		<span class="feedback" ng-show="community.feedback"><span class="badge">{{community.feedback}}</span> liked this</span>
+		<span class="feedback" ng-hide="community.feedback">No feedback yet</span>
+		<span>{{community.playermsg}}</span>
+		<span class="servers">{{community.serversmsg}}</span>
+	</span>
+</a>
