@@ -1,9 +1,0 @@
-#node
-node_modules/
-npm-debug.log
-
-#dropbox
-**/_notes/
-
-#other
-public/assets/img/banners/**
