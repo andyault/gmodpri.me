@@ -98,44 +98,54 @@ a.fg:hover {
 }
 
 #logo {
-	background:url(../assets/logo.svg) center center / cover;
+	background:url(/assets/img/logo.svg) center center / cover;
 }
 
-server-view .loading {
+community-view {
+	font-size:0;
+}
+
+<<<<<<< HEAD:public/css/styles.css
+server-view .info p {
+	background:#ddd;
+	color:#000;
+=======
+community-view .loading {
 	font-size:20px;
 	color:#ccc;
 }
 
-server-view .rank {
-	background:#333;
-	border-bottom-right-radius:32px;
+community-view span {
+	font-size:16px;
+>>>>>>> develop:public/assets/css/styles.css
 }
 
-server-view .rank p {
-	font-size:12px;
-}
-
-server-view .info p {
-	background:#ddd;
-	color:#000;
-}
-
-server-view .info .title {
+community-view .title {
 	background:#00a1e4;
 	color:#fff;
-	text-transform:capitalize;
 	overflow:hidden;
 	text-overflow:ellipsis;
+	text-align:center;
 	white-space:nowrap;
 }
 
-server-view .info p.offline {
-	background:#E8173C;
+community-view .info span {
+	text-align:center;
+	color:#000;
+	background:#eee;
+}
+
+community-view .info .feedback {
+	background:none;
+}
+
+community-view .info .feedback .badge {
+	border-radius:6px;
 	color:#fff;
 }
 
-server-view .code {
-	background:#eee;
+community-view .info .servers {
+	background:#ddd;
 }
 
 comment-view .avatar {

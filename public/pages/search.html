@@ -1,77 +1,181 @@
 <style>
-	#sidebar {
-		float:left;
+	#communities .col {
+		display:inline-block;
+	}
+
+	#communities .sidebar {
+		position:fixed;
 		width:300px;
-		padding:10px;
+		text-align:center;
 	}
 
-	#settings {
-		border-radius:16px;
-		border-top:16px solid #00A1E4;
-		outline:1px solid #ccc;
-
-		padding:10px;
+	#communities .left {
+		float:left;
 	}
 
-	#search, #searchby {
-		border:1px solid #ccc;
+	#communities .right {
+		float:right;
 	}
 
-	#sidebar a {
-		color:#00A1E4;
+	#communities #newdiv {
+		text-align:center;
+		margin-bottom:50px;
+		visibility:hidden;
 	}
 
-	#sidebar hr {
-		border-top:1px solid #ccc;
+	#communities #newdiv.show {
+		visibility:visible;
+	}
+
+	#communities #new {
+		display:inline-block;
+		color:#fff !important;
+	}
+
+	#communities #noresults, #communities #results {
+		width:900px;
+		text-align:center;
+	}
+
+	#communities community-view {
+		display:inline-block;
 		margin:10px 0;
+		text-align:left;
 	}
 
-	#search, #sidebar p {
+	#communities .pagination {
+		text-align:center;
 		margin-bottom:10px;
 	}
 
-	#search {
-		width:100%;
+	#communities .pagination a {
+		color:#666;
+		cursor:pointer;
 	}
 
-	#searchby {
+	#communities .pagination i {
+		padding:0 5px;
+	}
+
+	#communities .pagination .page {
+		margin:0 5px;
+	}
+
+	#communities .pagination .active {
+		text-decoration:underline;
+	}
+
+	#communities .pagination .disabled {
+		color:#ccc;
+		cursor:default;
+	}
+
+	#communities #settings {
+		text-align:left;
+	}
+
+	#communities #settings input, #communities #settings select {
+		font-size:16px;
+		border:1px solid #ccc;
+	}
+
+	#communities #settings #search {
+		width:100%;
+		padding:0 5px;
+	}
+
+	#communities #settings #remove {
+		float:right;
+	}
+
+	#communities #settings #search, #communities #settings p {
+		margin-bottom:10px;
+	}
+
+	#communities #settings select {
 		float:right;
 		width:50%;
 	}
 
-	#results {
-		width:61.8%;
+	#communities #settings a, #communities .pagination .page {
+		color:#00A1E4;
 	}
 
-	#sidebar span {
-		display:inline-block;
-		width:100%;
-		text-align:right;
+	#communities #settings hr {
+		border-top:1px solid #ccc;
+		margin:10px 0;
+	}
+
+	#communities #settings .criteria {
+		margin-bottom:10px;
+	}
+
+	#communities #settings .criteria.last {
+		margin-bottom:0;
+	}
+
+	#communities #settings .hidden {
+		visibility:hidden;
+	}
+
+	#communities #settings #hr2 {
+		margin-top:15px;
+	}
+
+	#communities #categories {
+		list-style:none;
+		padding-left:20px;
 	}
 </style>
 
-<section id="searchSect">
-	<div id="sidebar">
-		<div id="settings" class="modal">
-			<input id="search" type="text" placeholder="Search">
-			<p>Search by: <select id="searchby">
-				<option selected>Name</option>
-				<option>Category</option>
-				<option>Map</option>
-				<option>Tags</option>
-			</select></p>
-			<p>Sort by: <select id="searchby">
-				<option selected>Rank</option>
-				<option>Players</option>
-				<option>Name</option>
-			</select></p>
-			<hr />
-			<a href="#">+ Add Filter</a>
-			<hr />
-			<span><a href="#" id="searchbtn">Search</a></span>
+<section ng-hide="results"><p class="msg">Fetching data...</p></section>
+
+<section id="communities" ng-show="results">
+	<p id="noresults" class="col right" ng-hide="results.length">No communities found.</p>
+	<div id="results" class="col right" ng-show="results.length">
+		<div class="pagination">
+			<a ng-click="setPage(0)" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-double-left"></i></a>
+			<a ng-click="prevPage()" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-left"></i></a>
+			<a ng-click="setPage(page)" ng-class="{active:isPage(page)}" class="page" ng-repeat="page in pages()">{{page + 1}}</a>
+			<a ng-click="nextPage()" ng-class="{disabled:isPage(numpages - 1)}"><i class="fa fa-angle-right"></i></a>
+			<a ng-click="setPage(numpages - 1)" ng-class="{disabled:isPage(numpages - 1)}"><i class="fa fa-angle-double-right"></i></a>
+		</div>
+
+		<community-view ng-repeat="community in results"></community-view>
+
+		<div class="pagination">
+			<a ng-click="setPage(0)" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-double-left"></i></a>
+			<a ng-click="prevPage()" ng-class="{disabled:isPage(0)}"><i class="fa fa-angle-left"></i></a>
+			<a ng-click="setPage(page)" ng-class="{active:isPage(page)}" class="page" ng-repeat="page in pages()">{{page + 1}}</a>
+			<a ng-click="nextPage()" ng-class="{disabled:isPage(numpages - 1)}"><i class="fa fa-angle-right"></i></a>
+			<a ng-click="setPage(numpages - 1)" ng-class="{disabled:isPage(numpages - 1)}"><i class="fa fa-angle-double-right"></i></a>
 		</div>
 	</div>
-	
-	<div id="results">
+
+	<div class="col sidebar left" id="settings">
+		<div id="newdiv" ng-class="{show:user}"><a href="/community/new" id="new" class="bg"><i class="fa fa-plus"></i> Add a Community</a></div>
+
+		<div class="filter" ng-repeat="filter in filters" ng-hide="filter.hidden">
+			<input id="search" type="text" placeholder="Search" ng-model="filter.value" ng-change="fetchCommunities()">
+
+			<p>Search by: <select class="criteria" ng-class="{last: $last}" ng-model="filter.field" ng-change="updateUnused(); fetchCommunities();"
+				ng-options="field.value as field.name for field in criteria">
+				</select>
+			</p>
+		</div>
+
+		<a href ng-click="addFilter()" ng-class="{hidden:(filters.length == criteria.length)}"><i class="fa fa-plus"></i> Add Search Filter</a>
+		<a href ng-click="removeFilter()" class="right" ng-show="filters[0]"><i class="fa fa-minus"></i> Remove Filter</a>
+
+		<hr />
+
+		<p>Sort by: <select ng-model="sortBy" ng-model="sortBy" ng-change="fetchCommunities()"
+			ng-options="option.value as option.name for option in sortOptions">
+		</select></p>
+
+		<p>Order by: <select ng-model="orderBy" ng-change="fetchCommunities()">
+			<option value selected>Descending</option>
+			<option value="1">Ascending</option>
+		</select></p>
 	</div>
 </section>

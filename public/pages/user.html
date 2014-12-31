@@ -107,7 +107,7 @@
 		min-height:80px;
 	}
 	
-	#account #servers, #account #favorites {
+	#account #communities, #account #favorites {
 		text-align:center;
 	}
 </style>
@@ -140,7 +140,7 @@
 				<a href ng-click="setTab(0)" ng-class="{active:isTab(0)}">Activity</a>
 				<a href ng-click="setTab(1)" ng-class="{active:isTab(1)}">Comments</a>
 				<a href ng-click="setTab(2)" ng-class="{active:isTab(2)}">Favorites</a>
-				<a href ng-click="setTab(3)" ng-class="{active:isTab(3)}">Servers</a>
+				<a href ng-click="setTab(3)" ng-class="{active:isTab(3)}">Communities</a>
 			</div>
 
 			<div id="activity" ng-show="isTab(0)">
@@ -168,13 +168,13 @@
 			<div id="favorites" ng-show="isTab(2)">
 				<p class="msg" ng-hide="favorites.length">{{prefix}} no favorites yet!</p>
 				
-				<server-view ng-repeat="server in favorites"></server-view>
+				<community-view ng-repeat="community in favorites"></community-view>
 			</div>
 
-			<div id="servers" ng-show="isTab(3)">
-				<p class="msg" ng-hide="userdata.servers.length">{{prefix}} no servers yet!</p>
+			<div id="communities" ng-show="isTab(3)">
+				<p class="msg" ng-hide="userdata.communities.length">{{prefix}} no communities yet!</p>
 				
-				<server-view ng-repeat="server in servers"></server-view>
+				<community-view ng-repeat="community in communities"></community-view>
 			</div>
 		</div>
 	</div>

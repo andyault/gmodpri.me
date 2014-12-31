@@ -27,18 +27,21 @@
 	<a class="fg" href="/getstarted">Click here to get started</a>
 </section>
 
-<section ng-hide="servers || sponsored"><p class="msg">Fetching data...</p></section>
+<section ng-hide="communities"><p class="msg">Fetching data...</p></section>
 
-<section>
-	<div ng-show="sponsored">
+<section ng-show="communities">
+	
+	<!-- <div>
 		<h1>Sponsored Servers</h1>
 
-		<div class="container">
-			<server-view ng-repeat="server in sponsored" ng-class="{left:$even, right:$odd}"></server-view>
+		<p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
+
+		<div class="container" ng-show="servers.length">
+			<server-view ng-repeat="server in servers" ng-class="{left:$even, right:$odd}"></server-view>
 		</div>
 	</div>
 	
-	<!-- <div>
+	<div>
 		<h1>Featured Servers</h1>
 
 		<p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
@@ -49,12 +52,12 @@
 	</div> -->
 	
 	<div id="top">
-		<h1>New Servers</h1>
+		<h1>New Communities</h1>
 
-		<p class="msg" ng-hide="servers.length">Nothing here, boss!</p>
+		<p class="msg" ng-hide="communities.length">Nothing here, boss!</p>
 
-		<div class="container" ng-show="servers.length">
-			<server-view ng-repeat="server in servers" ng-class="{left:$even, right:$odd}"></server-view>
+		<div class="container" ng-show="communities.length">
+			<community-view ng-repeat="community in communities" ng-class="{left:$even, right:$odd}"></community-view>
 		</div>
 	</div>
 	

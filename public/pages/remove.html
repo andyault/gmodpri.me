@@ -14,11 +14,12 @@
 	}
 </style>
 
-<section ng-hide="server || error"><p class="msg">Fetching data...</p></section>
+<section ng-hide="community || error"><p class="msg">Fetching data...</p></section>
 <section ng-show="error"><p class="msg">{{error}}</p></section>
 
-<section id="prompt" class="msg" ng-show="server && !error">
-	<p>Are you sure you want to delete {{server.name}} ({{server.fullip}})? This can't be undone.</p>
+<section id="prompt" class="msg" ng-show="community && !error">
+	<p>Are you sure you want to delete the {{community.name}} community? This can't be undone.</p>
+	<p>(If you're only trying to delete a server, use the edit page!)</p>
 	<a ng-click="remove()" id="yes" class="bg">I'm sure</a>
-	<a ng-href="/servers/{{server._id}}" class="bg red">Not sure</a>
+	<a ng-href="/community/{{community._id}}" class="bg red">Not sure</a>
 </section>

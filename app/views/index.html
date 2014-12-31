@@ -4,14 +4,20 @@
 <meta charset="utf-8">
 <base href="/">
 
-<script src="/js/inc/angular.min.js"></script>
-<script src="/js/inc/angular-route.min.js"></script>
+<script src="/assets/js/angular.min.js"></script>
+<script src="/assets/js/angular-route.min.js"></script>
 
-<script src="/js/ctrl/main.js"></script>
+<script src="/app/directives/directives.js"></script>
+<script src="/app/routes/footer.js"></script>
+<script src="/app/routes/users.js"></script>
+<script src="/app/routes/communities.js"></script>
+<script src="/app/routes/forms.js"></script>
+	
+<script src="/app/controllers/main.js"></script>
 
-<link rel="stylesheet" href="/css/styles.css">
-<link rel="stylesheet" href="/css/layout.css">
-<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/layout.css">
+<link rel="stylesheet" href="/assets/css/font-awesome.min.css">
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <title>Garry's Mod Servers | GMOD Prime</title>
@@ -32,7 +38,7 @@
 						</p>
 					</div>
 					
-					<a href="/servers"><i class="fa fa-list-ul"></i> Servers</a>
+					<a href="/search"><i class="fa fa-list-ul"></i> Communities</a>
 					<a href="/login" target="_self" ng-hide="user"><i class="fa fa-steam"></i> Login</a>
 					<a href="/user" ng-show="user"><i class="fa fa-user"></i> My Account</a>
 					<!-- <a href="/logout" target="_self" ng-show="user"><i class="fa fa-power-off"></i> Logout</a> -->
@@ -49,7 +55,7 @@
 			GMOD Prime &copy; <a class="fg" href="http://andrewault.me">Andrew Ault</a> 2014
 			
 			<span id="info">
-				Home of {{info.servers}} servers and {{info.users}} users ({{info.active}} active)
+				Home of {{info.communities}} communities and {{info.users}} users ({{info.active}} active)
 			</span>
 			
 			<span class="right">

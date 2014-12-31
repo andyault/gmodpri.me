@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 var passport = require('passport'),
 	http = require('http'),
 	Busboy = require('busboy'),
@@ -6,12 +7,21 @@ var passport = require('passport'),
 	dns = require('dns'),
 	fs = require('fs'),
 	chalk = require('chalk');
+=======
+var chalk = require('chalk');
+>>>>>>> develop
 
-var Server = require('./models/server'),
-	User = require('./models/user');
+var User = require('./models/user');
 
-var config = require('../config');
+var lastIP,
+	methods = {
+		GET: true,
+		HEAD: true,
+		OPTIONS: true
+	},
+	fields = ['params', 'body'];
 
+<<<<<<< HEAD
 var options = {
 	root: __dirname + '/../public/'
 }
@@ -48,14 +58,15 @@ var addActivity = function(user, info, shouldSave) {
 	info.time = Date.now();
 	
 	user.activity.unshift(info);
+=======
+var timestamp = function() {
+	var now = new Date();
+>>>>>>> develop
 	
-	user.activity = user.activity.slice(0, config.activityLength);
-	
-	if(shouldSave) {
-		user.save();
-	}	
+	return chalk.blue.bgWhite(now.getMonth() + '/' + now.getDate() + ' ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds());
 }
 
+<<<<<<< HEAD
 var addNotification = function(user, info, shouldSave) {
 	info.unread = true;
 	
@@ -78,6 +89,19 @@ var lastIP;
 
 module.exports = function(app) {
 	var startTime = Date.now();
+=======
+module.exports = function(app) {
+	process.on('uncaughtException', function(err) {
+		console.log(chalk.red.bold('Error!'));
+		
+		if(err.stack)
+			console.log(' ', chalk.red(err.stack));
+		else
+			console.log(' ', chalk.red(err.toString()));
+		
+		console.log('');
+	});
+>>>>>>> develop
 	
 	process.on('uncaughtException', function(err) {
 		console.log(chalk.red.underline.bold('!!Uncaught exception!!'), '\n');
@@ -85,17 +109,23 @@ module.exports = function(app) {
 	});
 	
 	app.use(function(req, res, next) {
-		if(req.method != 'GET') {
+		if(!methods[req.method]) {
 			if(lastIP !== req.ip) {
 				lastIP = req.ip;
 
 				console.log('\n' + chalk.bold(lastIP + ':'));
 			}
+<<<<<<< HEAD
+			
+			console.log(' ', '@', timestamp(), ':');
+			console.log(' ', ' ', req.method, req.url);
+=======
+>>>>>>> develop
 			
 			console.log(' ', '@', timestamp(), ':');
 			console.log(' ', ' ', req.method, req.url);
 			
-			['params', 'body'].forEach(function(field) {
+			fields.forEach(function(field) {
 				var empty = true;
 				
 				for(var key in req[field]) {
@@ -106,33 +136,22 @@ module.exports = function(app) {
 				}
 				
 				if(!empty) {
-					console.log(' ', ' ', field + ':', req[field]);
+					console.log(' ', ' ', ' ', field + ':', req[field]);
 				}
 			});
 			
 			console.log('');
 		}
 		
-		req.socket.setMaxListeners(0);
-		
-		req.socket.once('timeout', function() {
-			//handleError('ETIMEDOUT', req, res);
-			return
-		});
-		
-		req.socket.once('error', function(err) {
-			handleError(err, req, res);
-			return
-		});
+		//console.log(' ', timestamp(), req.method + ':', req.url);
 		
 		if(req.user) {
 			User.findOne({id: req.user.id}, function(err, userdata) {
-				if(handleError(err, req, res))
-					return
+				if(err)
+					throw err;
 				
 				if(userdata) {
 					userdata.lastSeen = Date.now();
-
 					userdata.save();
 				}
 			});
@@ -142,6 +161,7 @@ module.exports = function(app) {
 
 		next();
 	});
+<<<<<<< HEAD
 
 	//user 
 
@@ -885,8 +905,18 @@ module.exports = function(app) {
 	});
 
 	//everything else
+=======
+	
+	app.use('/', require('./routes/auth'));
+	app.use('/', require('./routes/api'));
+	app.use('/', require('./routes/users'));
+	app.use('/', require('./routes/communities'));
+	app.use('/', require('./routes/forms'));
+>>>>>>> develop
 
 	app.get('*', function(req, res) {
-		res.sendFile('/views/index.html', options);
+		res.cookie('XSRF-TOKEN', req.csrfToken());
+		
+		res.sendFile('/views/index.html', {root: __dirname});
 	});
 }

@@ -100,74 +100,60 @@ header #notifications a {
 	padding:0;
 }
 
+<<<<<<< HEAD:public/css/layout.css
 server-view {
+=======
+community-view {
+>>>>>>> develop:public/assets/css/layout.css
 	position:relative;
 	display:inline-block;
 	width:570px;
-	height:100px;
+	height:138px;
 	margin:10px 20px;
 }
 
-server-view .loading {
+community-view .loading {
 	display:block;
 	position:absolute;
 	top:0; right: 0; bottom: 0; left: 0;
-	width:570px; height:100;
+	width:570px; height:138px;
 	text-align:center;
 	line-height:100px;
 }
 
-server-view.left {
+community-view.left {
 	margin-right:10px;
 }
 
-server-view.right {
+community-view.right {
 	margin-left:10px;
 }
 
-server-view .banner {
-	position:absolute;
-	top:0;
-	left:0;
-	bottom:0;
-	right:170px;
+community-view span {
+	display:block;
+	float:none;
+	height:33.33px;
+	line-height:33.33px;
+}
+
+community-view .title {
+	width:570px;
+}
+
+community-view .banner {
 	width:400px;
 	height:100px;
+	float:left;
 }
 
-server-view .rank {
-	position:absolute;
-	top:0;
-	left:0;
-	width:32px;
-	height:32px;
-	padding:5px;
-	line-height:16px;
-}
-
-server-view .info {
-	position:absolute;
-	top:0;
-	right:0;
+community-view .info {
 	width:170px;
-	text-align: center;
+	float:left;
 }
 
-server-view .info p {
-	line-height:33.333px;
-}
-
-server-view .info .title {
-	padding:0 5px;
-}
-
-server-view .code {
-	position:absolute;
-	right:0;
-	bottom:0;
-	line-height:34px;
-	width:170px;
-	text-align:center;
+community-view .feedback .badge {
+	display:inline;
+	padding:0.15em 0.25em;
 }
 
 p.msg {
