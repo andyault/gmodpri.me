@@ -17,6 +17,21 @@ var addActivity = function(user, info, shouldSave) {
 	}	
 }
 
+var addNotification = function(user, info, shouldSave) {
+	if(!user) //???
+		return
+	
+	info.unread = true;
+	
+	user.notifications.unshift(info);
+	
+	user.notifications = user.notifications.slice(0, 5);
+	
+	if(shouldSave) {
+		user.save();
+	}	
+}
+
 var router = express.Router();
 
 router.get('/api/communities/', function(req, res) {
@@ -38,6 +53,12 @@ router.get('/api/communities/', function(req, res) {
 	Community.find(search, function(err, communities) {
 		if(err)
 			throw err;
+		
+		if(special.sortBy == 'random') {
+			communities.forEach(function(community) {
+				community.random = Math.random();
+			});
+		}
 
 		communities.sort(function(a, b) {
 			var field = special.sortBy;
@@ -54,10 +75,21 @@ router.get('/api/communities/', function(req, res) {
 			amt: communities.length,
 			results: communities.slice(special.start, special.start + special.amt).map(function(v) {return v._id})
 		});
+		
+		if(special.sortBy == 'random') {
+			communities.forEach(function(community) {
+				delete community.random;
+			});
+		}
 	});
 });
 
 router.get('/api/community/:id', function(req, res) {
+	if(!req.params.id) {
+		res.end();
+		return
+	}
+	
 	Community.findOne({_id: req.params.id}, function(err, community) {
 		if(err)
 			throw err;
@@ -142,6 +174,15 @@ router.post('/api/community/:id/comment', function(req, res) {
 			res.end();
 			return
 		}
+		
+		if(req.body.rating) {
+			community.comments.some(function(comment) {
+				if(comment.author == req.user.id) {
+					if(comment.rating)
+						return !(req.body.rating = 0);
+				}
+			});
+		}
 
 		community.comments.unshift({
 			author: req.user.id,
@@ -149,6 +190,8 @@ router.post('/api/community/:id/comment', function(req, res) {
 			comment: req.body.comment.trim(),
 			rating: req.body.rating
 		});
+		
+		community.markModified('comments');
 
 		community.save();
 
@@ -165,7 +208,44 @@ router.post('/api/community/:id/comment', function(req, res) {
 
 		res.end();
 	});
-});	
+});
+
+router.delete('/api/community/:id/comment/:cid', function(req, res) {
+	if(!req.user) {
+		res.end();
+		return
+	}
+	
+	Community.findOne({_id: req.params.id}, function(err, community) {
+		if(err)
+			throw err;
+		
+		if(!community) {
+			res.end();
+			return
+		}
+		
+		var comment = community.comments[req.params.cid];
+		
+		if(!comment) {
+			res.end();
+			return
+		}
+		
+		if(comment.author !== req.user.id) {
+			res.end();
+			return
+		}
+		
+		community.comments.splice(req.params.cid, 1);
+		
+		community.markModified('comments');
+		
+		community.save();
+		
+		res.end();
+	});
+});
 	
 router.delete('/api/community/:id', function(req, res) {
 	if(!req.user) {

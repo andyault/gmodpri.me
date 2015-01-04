@@ -67,6 +67,12 @@ module.exports = function(app) {
 				if(userdata) {
 					userdata.lastSeen = Date.now();
 					userdata.save();
+				} else {
+					userdata = new User({
+						id: req.user.id,
+						firstSeen: Date.now(),
+						lastSeen: Date.now()
+					}).save();
 				}
 			});
 		}

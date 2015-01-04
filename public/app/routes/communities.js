@@ -1,3 +1,5 @@
+//var Showdown = require('/assets/js/showdown.js');
+
 var timeAgo = function(seconds) {
 	var timeago = seconds + ' seconds ago';
 	if(seconds < 5) {
@@ -19,6 +21,8 @@ app.config(function($routeProvider) {
 		controller: function($scope, $http) {
 			var cache = {};
 			var cachenum = 0;
+			
+			$scope.perpage = 15;
 
 			$http.get('/api/communities', {params: {amt: $scope.perpage}}).success(function(data) {
 				$scope.results = [];
@@ -26,8 +30,13 @@ app.config(function($routeProvider) {
 				data.results.forEach(function(id, k) {
 					$scope.results[k] = {loading: true};
 
-					$http.get('/api/community/' + id).success(function(community) {
-						cache[id] = $scope.results[k] = community;
+					$http.get('/api/community/' + id).success(function(data) {
+						var community = $scope.results[k];
+
+						if(community.deferred)
+							community.deferred.resolve(data);
+						
+						cache[id] = $scope.results[k] = data;
 					});
 				});
 
@@ -99,8 +108,13 @@ app.config(function($routeProvider) {
 						} else {
 							$scope.results[k] = {loading: true};
 
-							$http.get('/api/community/' + id).success(function(community) {
-								cache[id] = $scope.results[k] = community;
+							$http.get('/api/community/' + id).success(function(data) {
+								var community = $scope.results[k];
+
+								if(community.deferred)
+									community.deferred.resolve(data);
+
+								cache[id] = $scope.results[k] = data;
 							});
 						}
 					});
@@ -119,7 +133,6 @@ app.config(function($routeProvider) {
 
 			$scope.curpage = 0;
 			$scope.numpages = 0;
-			$scope.perpage = 15;
 
 			$scope.pages = function() {
 				var ret = [];
@@ -148,8 +161,13 @@ app.config(function($routeProvider) {
 						} else {
 							$scope.results[k] = {loading: true};
 
-							$http.get('/api/community/' + id).success(function(community) {
-								cache[id] = $scope.results[k] = community;
+							$http.get('/api/community/' + id).success(function(data) {
+								var community = $scope.results[k];
+
+								if(community.deferred)
+									community.deferred.resolve(data);
+
+								cache[id] = $scope.results[k] = data;
 							});
 						}
 					});
@@ -198,13 +216,16 @@ app.config(function($routeProvider) {
 				if(community.website)
 					community.website = (community.website.match(/^[^:]+:\/\//) ? '' : 'http://') + community.website;
 				
+				var converter = new Showdown.converter();
+				document.getElementById('desc').innerHTML = converter.makeHtml(community.description);
+				
 				community.feedback = {
 					total: 0,
 					good: 0,
 					percent: 0
 				}
 
-				community.comments.forEach(function(comment) {
+				community.comments.forEach(function(comment, id) {
 					comment.loading = true;
 
 					if(comment.rating) {
@@ -214,8 +235,11 @@ app.config(function($routeProvider) {
 							community.feedback.good++;
 					}
 					
+					comment.id = id;
+					
 					getPromise(comment.author).then(function(data) {
 						comment.userdata = data;
+						delete comment.loading;
 					});
 				});
 
@@ -239,6 +263,17 @@ app.config(function($routeProvider) {
 					$scope.isOwner = community.owner == $rootScope.user.id;
 					$scope.reviewmsg = $scope.isOwner ? 'Leave a comment' : 'Leave your feedback';
 					
+					$scope.canRate = !$scope.isOwner;
+					
+					if($scope.canRate) {
+						community.comments.some(function(comment) {
+							if(comment.author == $rootScope.user.id) {
+								if(comment.rating)
+									return !($scope.canRate = false);
+							}
+						});
+					}
+					
 					$scope.postComment = function() {
 						var commentbox = document.getElementById('commentbox');
 
@@ -247,7 +282,14 @@ app.config(function($routeProvider) {
 							time: Date.now(),
 							comment: commentbox.value,
 							userdata: $rootScope.userdata,
-							rating: $scope.rating
+							rating: $scope.rating,
+							id: -1
+						});
+						
+						$scope.comment = '';
+						
+						$scope.community.comments.forEach(function(comment) {
+							comment.id++;
 						});
 
 						if($scope.rating) {
@@ -268,17 +310,18 @@ app.config(function($routeProvider) {
 			
 			//get some stuff done while we're waiting for the community info
 			if($rootScope.user) {
-				var promise;
+				var promise, deferred;
 				
 				if(!$rootScope.userdata)
 					promise = getPromise($rootScope.user.id);
 				else {
-					var deferred = $q.defer(); //hate this
+					deferred = $q.defer(); //hate this
 					promise = deferred.promise;
-					deferred.resolve($rootScope.userdata);
 				}
 				
 				promise.then(function(data) {
+					$rootScope.userdata = data;
+					
 					$scope.faved = $rootScope.userdata.favorites.indexOf($routeParams.id) > -1;
 					$scope.rating = 0;
 					
@@ -290,13 +333,13 @@ app.config(function($routeProvider) {
 						
 						switch($scope.rating) {
 							case -1:
-								$scope.reviewmsg = 'I like this community!';
+								$scope.reviewmsg = 'I don\'t like this community!';
 								break
 							case 0:
 								$scope.reviewmsg = 'Leave your feedback';
 								break
 							case 1:
-								$scope.reviewmsg = 'I don\'t like this community!';
+								$scope.reviewmsg = 'I like this community!';
 								break
 						}
 					}
@@ -307,10 +350,15 @@ app.config(function($routeProvider) {
 					
 					$scope.fave = function() {
 						$scope.faved = !$scope.faved;
+					
+						$scope.favemsg = $scope.faved ? 'Unfavorite' : 'Add to favorites';
 
 						$http.post('api/community/' + $routeParams.id + '/fave');
 					}
 				});
+				
+				if(deferred)
+					deferred.resolve($rootScope.userdata);
 			};
 		}
 	});

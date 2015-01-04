@@ -5,7 +5,9 @@
 		<span class="top">{{comment.userdata.displayName}}</span>
 	</a>
 	
-	<span class="datetime top">{{timestamp}}</span>
+	<span class="small top">{{timestamp}}</span>
+	
+	<a ng-click="delete()" class="del small fg red top" ng-show="isAuthor">delete</a>
 	
 	<div class="comment" ng-class="{rated:comment.rating}">
 		{{comment.comment}}

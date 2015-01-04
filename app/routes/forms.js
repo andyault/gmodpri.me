@@ -155,11 +155,17 @@ router.post('/community/new', function(req, res) {
 					User.findOne({id: req.user.id}, function(err, user) {
 						if(err)
 							throw err;
+						
+						if(!user) {
+							//???
+							console.log('wtf');
+							console.log(req.user);
+						}
 
 						user.communities.unshift(newCommunity._id);
 
 						addActivity(user, {
-							type: 'server',
+							type: 'community',
 							action: 'add',
 							name: data.name,
 							id: newCommunity._id

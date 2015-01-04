@@ -112,14 +112,14 @@
 	}
 </style>
 
-<section ng-hide="userdata || error"><p class="msg">Fetching data...</p></section>
+<section ng-hide="data || error"><p class="msg">Fetching data...</p></section>
 <section ng-show="error"><p class="msg">{{error}}</p></section>
 
-<section id="account" ng-show="userdata">
+<section id="account" ng-show="data">
 	<div id="sidebar" class="left">
-		<a class="fg" ng-href="http://steamcommunity.com/profiles/{{userdata.id}}">
-			<img id="avatar" ng-src="{{userdata.avatar}}" />
-			<p id="displayname">{{userdata.displayName}}</p>
+		<a class="fg" ng-href="http://steamcommunity.com/profiles/{{data.id}}">
+			<img id="avatar" ng-src="{{data.avatar}}" />
+			<p id="displayname">{{data.displayName}}</p>
 		</a>
 			
 		<table id="userinfo">

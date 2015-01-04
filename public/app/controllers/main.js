@@ -25,20 +25,51 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 	
 	$routeProvider.when('/', {
 		templateUrl:'/pages/home.html',
-		controller: function($scope, $http) {
-			$http.get('/api/communities').success(function(communities) {
-				var data = communities;
-
-				$scope.communities = [];
+		controller: function($scope, $http, $q) {
+			$scope.categories = {};
+			$scope.fetching = true;
+			
+			$http.get('/api/communities', {params: {amt: 4}}).success(function(data) {
+				$scope.categories.new = [];
+				$scope.fetching = false;
+				
+				var added = {};
 
 				data.results.forEach(function(id, k) {
-					$scope.communities[k] = {loading: true};
+					$scope.categories.new[k] = {loading: true};
+					added[id] = true;
 
-					$http.get('/api/community/' + id).success(function(community) {
-						$scope.communities[k] = community;
+					$http.get('/api/community/' + id).success(function(data) {
+						var community = $scope.categories.new[k];
+
+						if(community.deferred)
+							community.deferred.resolve(data);
+						else 
+							community = $scope.categories.new[k] = data;
+					});
+				});
+			
+				$http.get('/api/communities', {params: {amt: 8, sortBy: 'random'}}).success(function(data) {
+					$scope.categories.random = [];
+
+					data.results.forEach(function(id) {
+						if(!added[id] && $scope.categories.random.length < 4) {
+							var k = $scope.categories.random.unshift({loading: true});
+
+							$http.get('/api/community/' + id).success(function(data) {
+								var community = $scope.categories.random[k - 1];
+
+								if(community.deferred)
+									community.deferred.resolve(data);
+								else
+									community = $scope.categories.random[k - 1] = data;
+							});
+						}
 					});
 				});
 			});
+			
+			//sponsored, featured
 		}
 	});
 

@@ -111,12 +111,7 @@
 	
 	#addform #multiple {
 		text-align:center;
-		font-size:14px;
 		line-height:35px;
-	}
-	
-	#addform #multiple a {
-		cursor:pointer;
 	}
 	
 	#addform #multiple a.red {
@@ -130,6 +125,50 @@
 		
 		width:auto;
 		float:right;
+	}
+	
+	#addform .invalid {
+		box-shadow:0 0 4px #f00;
+	}
+	
+	#addform .small {
+		font-size:14px;
+	}
+	
+	#addform #help {
+		font-size:14px;
+		display:none;
+	}
+	
+	#addform #help.display {
+		display:block;
+	}
+	
+	#addform #help table {
+		width:50%;
+		float:left;
+	}
+	
+	#addform #help th {
+		border-bottom:1px solid #ccc;
+	}
+	
+	#addform #help td {
+		width:50%;
+		border-bottom:1px solid #eee;
+		padding:5px 0;
+	}
+	
+	#addform hr {
+		border-bottom:1px solid #ccc;
+	}
+	
+	#addform #help a {
+		color:#00A1E4;
+	}
+
+	#addform #help a.fg:hover {
+		color:#19BCFF;
 	}
 </style>
 
@@ -147,6 +186,62 @@
 				<input type="text" name="name" placeholder="Name" ng-value="community.name" required>
 				<br />
 				<textarea name="desc" placeholder="Description" required>{{community.description}}</textarea>
+				
+				<a class="fg small" ng-click="toggleHelp()">Formatting help</a>
+				<div id="help">
+					<table>
+						<tr class="th">
+							<th>Input</th>
+							<th>Output</th>
+						</tr>
+						<tr>
+							<td>Header1<br/>=======</td>
+							<td><h1>Header1</h1></td>
+						</tr>
+						<tr>
+							<td>#Header1</td>
+							<td><h1>Header1</h1></td>
+						</tr>
+						<tr>
+							<td>Header2<br/>------------</td>
+							<td><h2>Header2</h2></td>
+						</tr>
+						<tr>
+							<td>##Header2</td>
+							<td><h2>Header2</h2></td>
+						</tr>
+						<tr>
+							<td>**Bold**<br/>__Bold__</td>
+							<td><strong>Bold</strong></td>
+						</tr>
+					</table>
+					<table>
+						<tr class="th">
+							<th>Input</th>
+							<th>Output</th>
+						</tr>
+						<tr>
+							<td>* List Item<br/>+ List Item<br/>- List Item</td>
+							<td><ul><li>List Item</li><li>List Item</li><li>List Item</li></ul></td>
+						</tr>
+						<tr>
+							<td>1. List Item</td>
+							<td><ol><li>List Item</li></ol></td>
+						</tr>
+						<tr>
+							<td>***<br/>---</td>
+							<td><hr/></td>
+						</tr>
+						<tr>
+							<td>[Link](http://google.com)</td>
+							<td><a href="http://google.com">Link</a></td>
+						</tr>
+						<tr>
+							<td>*Italic*<br/>_Italic_</td>
+							<td><em>Italic</em></td>
+						</tr>
+					</table>	
+				</div>
 			</div>
 
 			<div class="content right">
@@ -159,18 +254,18 @@
 					</div>
 				</div>
 				
-				<input type="url" name="website" placeholder="Website (optional)" ng-value="community.website">
+				<input type="text" name="website" id="website" placeholder="Website (optional)" ng-value="community.website">
 
 				<div ng-repeat="ip in ips" ng-class="{lastIP:$last}">
 					<input type="hidden" name="servernum" ng-value="$index">
 					<input type="text" name="servername" ng-attr-placeholder="Name #{{$index + 1}}" ng-model="ip.name" ng-show="ips.length > 1" ng-required="ips.length > 1">
-					<span class="part left"><input type="text" name="serverip" ng-attr-placeholder="IP Address {{ips.length > 1 ? '#' + ($index + 1) : ''}}" ng-model="ip.ip" ng-value="server.domain || server.ip" required></span>
-					<span class="part right"><input type="text" name="serverport" ng-attr-placeholder="Port{{ips.length > 1 ? ' #' + ($index + 1) : ' '}} (optional)" ng-model="ip.port" ng-value="server.port"></span>
+					<span class="part left"><input type="text" name="serverip" ng-attr-placeholder="IP Address {{ips.length > 1 ? '#' + ($index + 1) : ''}}" ng-model="ip.ip" ng-value="server.domain || server.ip" onchange="validateIP(this)" required></span>
+					<span class="part right"><input type="text" name="serverport" ng-attr-placeholder="Port{{ips.length > 1 ? ' #' + ($index + 1) : ' '}} (optional)" ng-model="ip.port" ng-value="server.port" onchange="validatePort(this)"></span>
 				</div>
 				
 				<div id="multiple">
-					<a class="fg" ng-click="addIP()">{{ips.length > 1 ? 'Add another' : 'More than one server?'}}</a>
-					<a class="fg red" ng-click="popIP()" ng-show="ips.length > 1">Remove</a>
+					<a class="fg small" ng-click="addIP()">{{ips.length > 1 ? 'Add another' : 'More than one server?'}}</a>
+					<a class="fg red small" ng-click="popIP()" ng-show="ips.length > 1">Remove</a>
 				</div>
 				
 				<input type="submit" value="Submit" id="submit" class="bg">

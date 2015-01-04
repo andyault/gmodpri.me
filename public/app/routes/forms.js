@@ -20,7 +20,42 @@ var commonStuff = function($scope, document) {
 			}
 
 			reader.readAsDataURL(this.files[0]);
+			
+			if(this.files[0].type.search(/image\/*/) < 0)
+				this.classList.add('invalid');
+			else
+				this.classList.remove('invalid');
 		}
+	}
+	
+	document.getElementById('website').onchange = function() {
+		if(!this.value.match(/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/)) //http://code.tutsplus.com/tutorials/8-regular-expressions-you-should-know--net-6149
+			this.classList.add('invalid');
+		else
+			this.classList.remove('invalid');
+	}
+	
+	validateIP = function(elem) {		
+		if(!elem.value.match(/([0-255]\.[0-255]\.[0-255])|(([a-z0-9\.-]+)\.([a-z\.]{2,6}))/))
+			elem.classList.add('invalid');
+		else
+			elem.classList.remove('invalid');
+	}
+	
+	validatePort = function(elem) {
+		if(!elem.value.match(/[0-65535]/))
+			elem.classList.add('invalid');
+		else
+			elem.classList.remove('invalid');
+	}
+	
+	document.getElementById('submit').onclick = function(e) {
+		if(document.getElementsByClassName('invalid').length)
+			e.stopPropagation();
+	}	
+	
+	$scope.toggleHelp = function() {
+		document.getElementById('help').classList.toggle('display');
 	}
 }
 

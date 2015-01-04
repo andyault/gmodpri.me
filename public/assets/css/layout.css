@@ -59,6 +59,10 @@ section {
 	margin-bottom:60px;
 }
 
+footer section {
+	margin-bottom:0;
+}
+
 #logo {
 	display:inline-block;
 	width:180px;
@@ -163,6 +167,7 @@ comment-view {
 }
 
 comment-view .avatar {
+	display:inline-block;
 	width:44px;
 	height:44px;
 	margin-right:10px;
@@ -173,11 +178,14 @@ comment-view .top {
 	vertical-align:top;
 }
 
-comment-view .datetime {
+comment-view .small {
 	font-size:12px;
-	
 	position:relative;
 	top:2px;
+}
+
+comment-view .del {
+	margin-left:20px;
 }
 
 comment-view .comment {

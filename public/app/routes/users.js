@@ -43,7 +43,7 @@ app.config(function($routeProvider) {
 					});
 				});
 
-				$scope.userdata = userdata;
+				$scope.data = userdata;
 
 				$scope.prefix = ($rootScope.user && $rootScope.user.id == userdata.id ? 'You have' : userdata.displayName + ' has');
 
@@ -71,6 +71,7 @@ app.config(function($routeProvider) {
 							break
 
 						case 'community':
+						case 'server':
 							ret.str.push(act.action == 'add' ? 'added' : 'deleted');
 
 							if(act.action == 'add') {

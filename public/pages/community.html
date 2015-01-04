@@ -86,14 +86,14 @@
 		white-space:nowrap;
 		overflow:hidden;
 		text-overflow:ellipsis;
+		font-size:28px;
+		color:#000;
+		border-bottom:2px solid #eee;
 	}
 	
 	#info #desc {
-		margin:110px 0 60px;
-	}
-	
-	#info #desc p {
-		white-space:pre-wrap;
+		margin:60px 0;
+		overflow:hidden;
 	}
 	
 	#info h2 {
@@ -141,6 +141,18 @@
 		border:0;
 		margin-bottom:10px;
 		cursor:pointer;
+	}
+	
+	#info #desc a {
+		color:#00A1E4;
+	}
+	
+	#info #desc a:hover {
+		color:#19BCFF;
+	}
+	
+	#info #desc hr {
+		border-bottom:1px solid #ccc;
 	}
 </style>
 
@@ -200,7 +212,7 @@
 		</table>
 		
 		<div id="actions" class="center" ng-show="user && !isOwner">
-			<a ng-click="act('fave')" class="bg" ng-class="{red:faved}"><i class="fa fa-heart"></i> {{favemsg}}</a>
+			<a ng-click="fave()" class="bg" ng-class="{red:faved}"><i class="fa fa-heart"></i> {{favemsg}}</a>
 		</div>
 		
 		<div id="actions" ng-show="user && isOwner">
@@ -212,9 +224,7 @@
 	<div id="left">
 		<h1 id="name">{{community.name}}</h1>
 
-		<div id="desc">
-			<p>{{community.description}}</p>
-		</div>
+		<div id="desc"></div>
 
 		<div id="comments">
 			<h2>Comments &amp; Reviews</h2>
@@ -224,7 +234,7 @@
 			<comment-view ng-repeat="comment in community.comments"></comment-view>
 
 			<span ng-show="user">
-				<textarea ng-class="{full:isOwner}" id="commentbox" ng-attr-placeholder="{{reviewmsg}}" ng-model="comment"></textarea>
+				<textarea ng-class="{full:!canRate}" id="commentbox" ng-attr-placeholder="{{reviewmsg}}" ng-model="comment"></textarea>
 				
 				<div id="review" ng-show="!isOwner">
 					<a class="bg" ng-class="{active:isRating(1)}" ng-click="setRating(1)"><i class="fa fa-thumbs-up"></i></a>

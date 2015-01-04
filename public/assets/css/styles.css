@@ -37,7 +37,7 @@ header a:hover {
 	border-color:#eee;
 }
 
-header a[ng-click] {
+a[ng-click] {
 	cursor:pointer;
 }
 
@@ -94,6 +94,10 @@ a.fg:hover {
 }
 
 .fg.red {
+	color:#B5122F;
+}
+
+a.fg.red:hover {
 	color:#E8173C;
 }
 
