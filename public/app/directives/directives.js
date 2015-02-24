@@ -26,7 +26,7 @@ app.directive('communityView', ['$q', function($q) {
 
 				if(feedback.total) {
 					var percent = Math.floor((feedback.good/feedback.total)*100);
-					community.feedback = percent + '%';
+					community.feedback = feedback.good + '/' + feedback.total;
 
 					var feedback = elem[0].getElementsByClassName('badge')[0];
 					feedback.style.backgroundColor = 'hsl(' + percent * 1.2 + ', 55%, 55%)';

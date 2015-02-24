@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html ng-app="mainApp">
 <head>
 <meta charset="utf-8">
 <base href="/">
@@ -7,6 +7,8 @@
 <script src="/assets/js/angular.min.js"></script>
 <script src="/assets/js/angular-route.min.js"></script>
 <script src="/assets/js/showdown.js"></script>
+	
+<link rel="shortcut icon" href="/assets/favicon.ico">
 
 <script src="/app/directives/directives.js"></script>
 <script src="/app/routes/footer.js"></script>
@@ -21,10 +23,12 @@
 <link rel="stylesheet" href="/assets/css/font-awesome.min.css">
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-<title>Garry's Mod Servers | GMOD Prime</title>
+	
+<title ng-bind="title"></title>
+<meta name="description" ng-attr-content="{{description}}">
 </head>
 
-<body ng-app="mainApp">
+<body>
 	<div class="wrapper">
 		<header>
 			<section>
@@ -53,7 +57,7 @@
 	
 	<footer>
 		<section>
-			GMOD Prime &copy; <a class="fg" href="http://andrewault.me">Andrew Ault</a> 2014
+			GMOD Prime &copy; <a class="fg" href="http://andrewault.me">Andrew Ault</a> 2014-2015
 			
 			<span id="info">
 				Home of {{info.communities}} communities and {{info.users}} users ({{info.active}} active)

@@ -6,18 +6,23 @@ app.config(function($routeProvider) {
 	$routeProvider.when('/user/:id?', {
 		templateUrl: '/pages/user.html',
 		controller: function($scope, $routeParams, $rootScope, $http, $interval, $q) {
+			$rootScope.title = 'Fetching...';
 			$routeParams.id = $routeParams.id || $rootScope.user.id;
 
 			if(!$routeParams.id) {
 				$scope.error = "You must be logged in to see your account!";
+				$rootScope.title = 'Error';
 				return;
 			}
 
 			$http.get('/api/userdata/' + encodeURIComponent($routeParams.id)).success(function(userdata) {
 				if(!userdata) {
 					$scope.error = "Account not found";
+					$rootScope.title = 'Not found';
 					return
 				}
+				
+				$rootScope.description = $rootScope.title = userdata.displayName + '\'s profile';
 
 				userdata.firstSeen = new Date(userdata.firstSeen);
 				userdata.lastSeen = new Date(userdata.lastSeen);
@@ -122,15 +127,13 @@ app.config(function($routeProvider) {
 
 				$scope.favorites = [];
 
-				for(var id in userdata.favorites) {
-					if(userdata.favorites.hasOwnProperty(id)) {
-						$scope.favorites[id] = {loading: true};
+				userdata.favorites.forEach(function(id, k) {
+					$scope.favorites[k] = {loading: true};
 
-						$http.get('/api/community/' + id).success(function(community) {
-							$scope.favorites[id] = community;
-						});
-					}
-				};
+					$http.get('/api/community/' + id).success(function(community) {
+						$scope.favorites[k] = community;
+					});
+				});
 
 				$scope.communities = [];
 

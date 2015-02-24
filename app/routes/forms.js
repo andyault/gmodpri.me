@@ -75,65 +75,90 @@ router.post('/community/new', function(req, res) {
 	}
 	
 	handleForm(req, function(data, files, servers) {
-		var checked = 0;
+		var checked = 0,
+			bad = false;
 
 		servers.forEach(function(server) {
-			server.ip = (server.ip.match(/^[^:]+:\/\//) ? '' : 'http://') + server.ip;
+			if(!bad) {
+				server.ip = (server.ip.match(/^[^:]+:\/\//) ? '' : 'http://') + server.ip;
 
-			server.ip = url.parse(server.ip).hostname;
-			server.port = +(server.port || 27015);
+				server.ip = url.parse(server.ip).hostname;
+				server.port = +(server.port || 27015);
 
-			if(server.port < 0 || server.port > 65536) {
-				res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
-				return
-			}
-
-			dns.lookup(server.ip, 4, function(err, ip) {
-				if(err)
-					throw err;
-
-				if(ip !== server.ip) {
-					server.domain = server.ip;
-					server.ip = ip;
+				if(server.port < 0 || server.port > 65536) {
+					res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
+					bad = true;
 				}
 
-				addAndCheck();
-			});
+				dns.lookup(server.ip, 4, function(err, ip) {
+					if(err)
+						throw err;
+
+					if(ip !== server.ip) {
+						server.domain = server.ip;
+						server.ip = ip;
+					}
+
+					addAndCheck();
+				});
+			}
 		});
+		
+		if(bad)
+			return;
+		
+		delete bad;
 
 		var addAndCheck = function() {
 			if(++checked == servers.length) {
 				//make sure we're not adding the same ip twice
 				
-				var ips = {};
+				var ips = {},
+					dupe = false;
 
 				servers.forEach(function(server) {
 					if(!ips[server.ip + server.port])
 						ips[server.ip + server.port] = true;
 					else {
-						res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
-						return
+						dupe = true;
 					}
 				});
+				
+				if(dupe) {
+					res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
+					return
+				}
 
 				delete ips;
+				delete dupe;
 
 				Community.find({}, function(err, communities) {
 					if(err)
 						throw err;
 					
 					//make sure no one else has any of our servers
+					
+					var exists = false;
 
 					communities.forEach(function(community) {
 						community.servers.forEach(function(server) {
 							servers.forEach(function(myserver) {
 								if(server.ip == myserver.ip && server.port == myserver.port) {
-									res.redirect('/return?msg=already_exists&location=' + encodeURIComponent('/community/' + community._id));
-									return
+									exists = community._id;
 								}
 							});
 						});
 					});
+					
+					if(exists) {
+						res.redirect('/return?msg=already_exists&location=' + encodeURIComponent('/community/' + exists));
+						return
+					}
+					
+					delete exists;
+					
+					console.log('bbb');
+					console.log('-');
 
 					var file = files.banner;
 
@@ -214,48 +239,61 @@ router.post('/community/:id/edit', function(req, res) {
 		}
 		
 		handleForm(req, function(data, files, servers) {
-			var checked = 0;
+			var checked = 0,
+				bad = false;
 
 			servers.forEach(function(server) {
-				server.ip = (server.ip.match(/^[^:]+:\/\//) ? '' : 'http://') + server.ip;
+				if(!bad) {
+					server.ip = (server.ip.match(/^[^:]+:\/\//) ? '' : 'http://') + server.ip;
 
-				server.ip = url.parse(server.ip).hostname;
-				server.port = +(server.port || 27015);
+					server.ip = url.parse(server.ip).hostname;
+					server.port = +(server.port || 27015);
 
-				if(server.port < 0 || server.port > 65536) {
-					res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
-					return
-				}
-
-				dns.lookup(server.ip, 4, function(err, ip) {
-					if(err)
-						throw err;
-
-					if(ip !== server.ip) {
-						server.domain = server.ip;
-						server.ip = ip;
+					if(server.port < 0 || server.port > 65536) {
+						res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
+						bad = true;
 					}
 
-					addAndCheck();
-				});
+					dns.lookup(server.ip, 4, function(err, ip) {
+						if(err)
+							throw err;
+
+						if(ip !== server.ip) {
+							server.domain = server.ip;
+							server.ip = ip;
+						}
+
+						addAndCheck();
+					});
+				}
 			});
+			
+			if(bad)
+				return;
+			
+			delete bad;
 
 			var addAndCheck = function() {
 				if(++checked == servers.length) {
 					//make sure we're not adding the same ip twice
 
-					var ips = {};
+					var ips = {},
+						dupe = false;
 
 					servers.forEach(function(server) {
 						if(!ips[server.ip + server.port])
 							ips[server.ip + server.port] = true;
 						else {
 							res.redirect('/return?msg=error&location=' + encodeURIComponent('/community/new'));
-							return
+							dupe = true;
 						}
 					});
+					
+					if(dupe)
+						return;
 
 					delete ips;
+					delete dupe;
 
 					Community.find({_id: {$ne: req.params.id}}, function(err, communities) {
 						if(err)
@@ -304,7 +342,7 @@ router.post('/community/:id/edit', function(req, res) {
 								fs.writeFile(filepath, file.data);
 							}
 
-							res.redirect('/return?msg=community_added&location=' + encodeURIComponent('/community/' + community._id));
+							res.redirect('/return?msg=community_updated&location=' + encodeURIComponent('/community/' + community._id));
 						});
 					});
 				}

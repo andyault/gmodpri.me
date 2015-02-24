@@ -144,7 +144,7 @@
 			</div>
 
 			<div id="activity" ng-show="isTab(0)">
-				<p class="msg" ng-hide="userdata.activity.length">{{prefix}} no recent activity!</p>
+				<p class="msg" ng-hide="activity.length">{{prefix}} no recent activity!</p>
 				
                 <div class="action" ng-repeat="action in activity" ng-class="{odd:$odd}">
 					<i class="fa icon" ng-class="action.icon"></i>

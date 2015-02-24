@@ -80,6 +80,10 @@ module.exports = function(app) {
 		next();
 	});
 	
+	app.get('/robots.txt', function(req, res) {
+		res.sendFile('robots.txt', {root: __dirname});
+	});
+	
 	app.use('/', require('./routes/auth'));
 	app.use('/', require('./routes/api'));
 	app.use('/', require('./routes/users'));

@@ -18,20 +18,27 @@ var app = angular.module('routes-communities', ['ngRoute']);
 app.config(function($routeProvider) {
 	$routeProvider.when('/search', {
 		templateUrl: '/pages/search.html',
-		controller: function($scope, $http) {
+		controller: function($rootScope, $scope, $http) {
+			$rootScope.title = 'Search';
+			$rootScope.description = 'Search';
+			
 			var cache = {};
 			var cachenum = 0;
 			
 			$scope.perpage = 15;
 
-			$http.get('/api/communities', {params: {amt: $scope.perpage}}).success(function(data) {
+			$http.get('/api/communities', {params: {amt: $scope.perpage}}).success(function(data) {				
 				$scope.results = [];
 
-				data.results.forEach(function(id, k) {
+				data.results.forEach(function(id, k) { //fetch list of ids
 					$scope.results[k] = {loading: true};
+					
+					var img = (new Image()).src = 'assets/img/banners/' + id;
 
-					$http.get('/api/community/' + id).success(function(data) {
+					$http.get('/api/community/' + id).success(function(data) { //fetch data for id 
 						var community = $scope.results[k];
+						
+						delete img;
 
 						if(community.deferred)
 							community.deferred.resolve(data);
@@ -47,8 +54,8 @@ app.config(function($routeProvider) {
 			$scope.filters = [];
 			$scope.criteria = [
 				{name: 'Name', value: 'name'}, 
-				{name: 'Gamemode', value: 'game'}, 
-				{name: 'Map', value: 'map'}
+				{name: 'Gamemode', value: 'games'}, 
+				{name: 'Map', value: 'maps'}
 			];
 
 			$scope.unused = $scope.criteria.map(function(x) {return x.value});
@@ -67,7 +74,7 @@ app.config(function($routeProvider) {
 
 				$scope.unused.unshift(old.field);
 
-				$scope.fetchServers();
+				$scope.fetchCommunities();
 			}
 
 			$scope.updateUnused = function() {
@@ -106,11 +113,9 @@ app.config(function($routeProvider) {
 						if(cache[id]) {
 							$scope.results[k] = cache[id];
 						} else {
-							$scope.results[k] = {loading: true};
+							var community = $scope.results[k] = {loading: true};
 
 							$http.get('/api/community/' + id).success(function(data) {
-								var community = $scope.results[k];
-
 								if(community.deferred)
 									community.deferred.resolve(data);
 
@@ -120,6 +125,7 @@ app.config(function($routeProvider) {
 					});
 
 					$scope.numpages = Math.ceil(data.amt/$scope.perpage);
+					$scope.curpage = 0;
 				});
 			}
 
@@ -159,11 +165,9 @@ app.config(function($routeProvider) {
 						if(cache[id]) {	
 							$scope.results[k] = cache[id];
 						} else {
-							$scope.results[k] = {loading: true};
+							var community = $scope.results[k] = {loading: true};
 
 							$http.get('/api/community/' + id).success(function(data) {
-								var community = $scope.results[k];
-
 								if(community.deferred)
 									community.deferred.resolve(data);
 
@@ -191,6 +195,8 @@ app.config(function($routeProvider) {
 	$routeProvider.when('/community/:id', {
 		templateUrl: '/pages/community.html',
 		controller: function($scope, $http, $routeParams, $rootScope, $q) {
+			$rootScope.title = 'Fetching...';
+			
 			var cache = [];
 			
 			var getPromise = function(id) {
@@ -210,8 +216,12 @@ app.config(function($routeProvider) {
 			$http.get('/api/community/' + $routeParams.id).success(function(community) {
 				if(!community) {
 					$scope.error = "Community not found";
+					$rootScope.title = 'Community not found';
 					return
 				}
+				
+				$rootScope.title = community.name;
+				$rootScope.description = community.description;
 
 				if(community.website)
 					community.website = (community.website.match(/^[^:]+:\/\//) ? '' : 'http://') + community.website;
@@ -309,12 +319,23 @@ app.config(function($routeProvider) {
 			});
 			
 			//get some stuff done while we're waiting for the community info
-			if($rootScope.user) {
+			var userPromise, userDef;
+			
+			if(!$rootScope.user)
+				userPromise = $rootScope.userPromise;
+			else {
+				userDef = $q.defer();
+				userPromise = userDef.promise;
+			}
+			
+			userPromise.then(function(data) {
+				$rootScope.user = data;
+				
 				var promise, deferred;
 				
-				if(!$rootScope.userdata)
+				if(!$rootScope.userdata) {
 					promise = getPromise($rootScope.user.id);
-				else {
+				} else {
 					deferred = $q.defer(); //hate this
 					promise = deferred.promise;
 				}
@@ -359,7 +380,10 @@ app.config(function($routeProvider) {
 				
 				if(deferred)
 					deferred.resolve($rootScope.userdata);
-			};
+			});
+			
+			if(userDef)
+				userDef.resolve($rootScope.user);
 		}
 	});
 });

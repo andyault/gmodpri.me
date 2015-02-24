@@ -37,7 +37,7 @@ passport.use(new steam.Strategy({
 
 //config
 
-var port = process.env.PORT || 80;
+var port = process.env.PORT || 8080;
 
 mongoose.connect(config.mongo.url + '/' + config.mongo.db, config.mongo.options);
 
@@ -56,6 +56,13 @@ app.use(cookieSession({
 }));
 
 app.use(csrf());
+
+app.use(function (err, req, res, next) {
+	if (err.code !== 'EBADCSRFTOKEN') return next(err)
+
+	req.method = 'GET';
+	res.redirect('/return?msg=csrf&location=' + encodeURIComponent(req.url));
+})
 
 app.use(passport.initialize());
 app.use(passport.session());

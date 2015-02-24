@@ -28,6 +28,9 @@ var communitySchema = new mongoose.Schema({
 		maxPlayers: Number,
 		error: String
 	*/
+	
+	games: String,
+	maps: String,
 
 	added: {type: Date, default: 0},
 	updated: {type: Date, default: 0},
@@ -66,7 +69,10 @@ communitySchema.methods.getInfo = function(num, callback) {
 
 communitySchema.methods.updateServers = function(callback) {
 	var community = this;
-	var done = 0;
+	
+	var done = 0,
+		games = "",
+		maps = "";
 	
 	community.servers.forEach(function(server, num) {
 		community.getInfo(num, function(err, info) {
@@ -82,12 +88,17 @@ communitySchema.methods.updateServers = function(callback) {
 						server[key] = info[key];
 					}
 				}
+				
+				games += server.game + ', ';
+				maps += server.map + ', ';
 			}
 
 			if(++done === community.servers.length) {
 				community.markModified('servers');
 				
 				community.updated = new Date();
+				community.games = games;
+				community.maps = maps;
 				
 				community.save(callback);
 			}

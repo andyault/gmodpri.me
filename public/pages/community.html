@@ -94,6 +94,7 @@
 	#info #desc {
 		margin:60px 0;
 		overflow:hidden;
+		white-space:pre-wrap;
 	}
 	
 	#info h2 {
@@ -105,7 +106,7 @@
 		position:relative;
 	}
 	
-	#info h2 {
+	#info h2.bottom {
 		margin-bottom:20px;
 	}
 	
@@ -117,11 +118,11 @@
 	#info #commentbox {
 		border:1px solid #ccc;
 		font-size:16px;
-		
 		margin:10px 0;
 		min-width:745px;
 		max-width:745px;
 		min-height:77px;
+		padding:5px;
 	}
 	
 	#info #commentbox.full {
@@ -227,7 +228,7 @@
 		<div id="desc"></div>
 
 		<div id="comments">
-			<h2>Comments &amp; Reviews</h2>
+			<h2 class="bottom">Comments &amp; Reviews</h2>
 			
             <p class="msg" ng-hide="community.comments.length">Nothing yet!</p>
 			

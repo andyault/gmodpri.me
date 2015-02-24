@@ -8,6 +8,7 @@ var msgs = {
 	log_in: "You must be logged in to do that!",
 	logged_in: "Logged in successfully!",
 	logged_out: "Logged out successfully!",
+	csrf: "Token expired! Refresh and try again!",
 	error: "Internal error!"
 }
 
@@ -25,7 +26,10 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 	
 	$routeProvider.when('/', {
 		templateUrl:'/pages/home.html',
-		controller: function($scope, $http, $q) {
+		controller: function($rootScope, $scope, $http, $q) {
+			$rootScope.title = 'Garry\'s Mod Servers | GMOD Prime';
+			$rootScope.description = 'GMOD Prime - An alternative server browser';
+			
 			$scope.categories = {};
 			$scope.fetching = true;
 			
@@ -75,8 +79,10 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 
 	$routeProvider.when('/return', {
 		template: '<center>{{msg}}</center>',
-		controller: function($scope, $location, $timeout) {
+		controller: function($rootScope, $scope, $location, $timeout) {
 			var query = $location.search();
+			
+			$rootScope.description = $rootScope.title = msgs[query.msg];
 
 			if(query.msg == 'wait') {
 				var date = new Date(query.time);
@@ -116,20 +122,36 @@ app.config(function($compileProvider, $routeProvider, $locationProvider) {
 	});
 
 	$routeProvider.otherwise({
-		templateUrl: '/pages/404.html'
+		templateUrl: '/pages/404.html',
+		controller: function($rootScope) {
+			$rootScope.title = '404 Not Found';
+			$rootScope.description = '404 Not Found';
+		}
 	});
 
 	$locationProvider.html5Mode(true);
 });
 
-app.run(function($http, $rootScope) {
+app.run(function($http, $rootScope, $q) {
 	$http.get('/api/info').success(function(info) {
 		$rootScope.info = info;
 	});
 	
+	//steam info
+	
+	var userDef = $q.defer();
+	
+	$rootScope.userPromise = userDef.promise;
+	
 	$http.get('/api/user').success(function(data) {
+		userDef.resolve(data);
+	});
+	
+	$rootScope.userPromise.then(function(data) {
 		$rootScope.user = data;
 	});
+	
+	//database info
 	
 	$http.get('/api/userdata').success(function(data) {
 		if(!data)

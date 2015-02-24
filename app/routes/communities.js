@@ -85,7 +85,7 @@ router.get('/api/communities/', function(req, res) {
 });
 
 router.get('/api/community/:id', function(req, res) {
-	if(!req.params.id) {
+	if(!req.params.id || req.params.id == '0') {
 		res.end();
 		return
 	}
@@ -280,7 +280,7 @@ router.delete('/api/community/:id', function(req, res) {
 				while(idof > -1) {
 					userdata.communities.splice(idof, 1);
 
-					idof = userdata.communities.indexOf(communities._id);
+					idof = userdata.communities.indexOf(community._id);
 				}
 
 				addActivity(userdata, {

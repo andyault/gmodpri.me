@@ -64,8 +64,9 @@ var app = angular.module('routes-forms', ['ngRoute']);
 app.config(function($routeProvider) {
 	$routeProvider.when('/community/new', {
 		templateUrl: '/pages/edit.html',
-		controller: function($scope) {
-			$scope.title = 'Add a community';
+		controller: function($rootScope, $scope) {
+			$rootScope.description = $rootScope.title = 'Add a community';
+				
 			$scope.subtitle = 'Adding servers that you do not own and attempting to upload malicious files will result in a temporary ban. Repeat offenses will result in a permanent ban.';
 			
 			commonStuff($scope, document);
@@ -76,8 +77,8 @@ app.config(function($routeProvider) {
 		
 	$routeProvider.when('/community/:id/edit', {
 		templateUrl: '/pages/edit.html',
-		controller: function($scope, $http, $routeParams) {
-			$scope.title = 'Edit community';
+		controller: function($rootScope, $scope, $http, $routeParams) {
+			$rootScope.description = $rootScope.title = 'Edit community';
 			
 			commonStuff($scope, document);
 
@@ -96,8 +97,10 @@ app.config(function($routeProvider) {
 
 	$routeProvider.when('/community/:id/remove', {
 		templateUrl: '/pages/remove.html',
-		controller: function($http, $routeParams, $scope, $rootScope, $location) {
+		controller: function($rootScope, $http, $routeParams, $scope, $rootScope, $location) {
 			$http.get('/api/community/' + $routeParams.id).success(function(community) {
+				$rootScope.description = $rootScope.title = 'Remove community';
+				
 				if(!community) {
 					$scope.error = 'That community does not exist.';
 					return
