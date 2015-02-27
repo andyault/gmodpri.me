@@ -172,7 +172,7 @@
 			</div>
 
 			<div id="communities" ng-show="isTab(3)">
-				<p class="msg" ng-hide="userdata.communities.length">{{prefix}} no communities yet!</p>
+				<p class="msg" ng-hide="communities.length">{{prefix}} no communities yet!</p>
 				
 				<community-view ng-repeat="community in communities"></community-view>
 			</div>
