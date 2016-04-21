@@ -7,3 +7,6 @@ npm-debug.log
 
 #other
 public/assets/img/banners/**
+
+#hide live stuff I guess
+live/*
